@@ -97,7 +97,7 @@ export default function DashboardLayout({ children, title, role }) {
         <div className="sidebar-header">
           <Link to="/" className="sidebar-brand">
             <span className="brand-dot"></span>
-            <span className="brand-name">DOP<span className="brand-accent">tv</span></span>
+            <span className="brand-name">MEDIOVA</span>
           </Link>
           <button className="sidebar-close-btn" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
             &times;

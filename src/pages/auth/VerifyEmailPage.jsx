@@ -42,7 +42,7 @@ export default function VerifyEmailPage() {
   return (
     <div className="auth-page">
       <div className="auth-side">
-        <div className="auth-side-logo">DOP<span>tv</span></div>
+        <div className="auth-side-logo">MEDIOVA</div>
         <h2>Account Activation</h2>
         <p>Confirming your credentials so you can start placing ads or earning rewards.</p>
       </div>

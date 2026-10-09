@@ -30,15 +30,15 @@ export default function AdminSettings() {
       const { data } = await adminGetSettings();
       const s = data.settings || {};
       setSettings({
-        platformName: s.platformName || 'DOPtv Advertising',
-        supportEmail: s.supportEmail || 'support@doptv.ng',
+        platformName: s.platformName || 'MEDIOVA Advertising',
+        supportEmail: s.supportEmail || 'support@mediova.ng',
         supportPhone: s.supportPhone || '+2348012345678',
         whatsappNumber: s.whatsappNumber || '+2348012345678',
         businessAddress: s.businessAddress || 'Victoria Island, Lagos, Nigeria',
         defaultWhatsAppMessage: s.defaultWhatsAppMessage || '',
         manualPaymentInstructions: s.manualPaymentInstructions || '',
         bankName: s.bankDetails?.bankName || 'Zenith Bank',
-        accountName: s.bankDetails?.accountName || 'DOPtv Media Brokerage Ltd',
+        accountName: s.bankDetails?.accountName || 'MEDIOVA Media Brokerage Ltd',
         accountNumber: s.bankDetails?.accountNumber || '1012345678',
         minInfluencerViews: s.minInfluencerViews || 500,
       });

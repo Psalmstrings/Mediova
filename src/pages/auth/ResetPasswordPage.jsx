@@ -37,7 +37,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="auth-page">
       <div className="auth-side">
-        <div className="auth-side-logo">DOP<span>tv</span></div>
+        <div className="auth-side-logo">MEDIOVA</div>
         <h2>Set New Password</h2>
         <p>Choose a secure password for your account.</p>
       </div>

@@ -1,14 +1,14 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://mediova-backend.onrender.com/api',
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
 });
 
 // Attach token from localStorage
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('doptv_token');
+  const token = localStorage.getItem('mediova_token') || localStorage.getItem('doptv_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -20,6 +20,8 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      localStorage.removeItem('mediova_token');
+      localStorage.removeItem('mediova_user');
       localStorage.removeItem('doptv_token');
       localStorage.removeItem('doptv_user');
       window.location.href = '/login';

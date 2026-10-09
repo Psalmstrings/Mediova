@@ -7,12 +7,12 @@ export default function PrivacyPage() {
       <PublicNav />
       <div style={{ background: '#0f172a', color: 'white', padding: '60px 24px', textAlign: 'center' }}>
         <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '8px' }}>Privacy Policy</h1>
-        <p style={{ color: '#94a3b8' }}>How DOPtv collects, protects, and handles personal data</p>
+        <p style={{ color: '#94a3b8' }}>How MEDIOVA collects, protects, and handles personal data</p>
       </div>
       <div style={{ maxWidth: '850px', margin: '60px auto', padding: '0 24px', lineHeight: '1.8', color: '#334155' }}>
         <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>1. Strict Privacy Firewall</h2>
         <p style={{ marginBottom: '24px' }}>
-          In accordance with our core architecture, <strong>influencer phone numbers, bank account details, and residential identities are NEVER disclosed to advertisers or vendors</strong>. Only authorized DOPtv administrators can view sensitive influencer details to distribute payouts and confirm reach.
+          In accordance with our core architecture, <strong>influencer phone numbers, bank account details, and residential identities are NEVER disclosed to advertisers or vendors</strong>. Only authorized MEDIOVA administrators can view sensitive influencer details to distribute payouts and confirm reach.
         </p>
 
         <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>2. Data We Collect</h2>

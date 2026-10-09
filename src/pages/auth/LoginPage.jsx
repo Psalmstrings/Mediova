@@ -63,7 +63,7 @@ export default function LoginPage() {
     <div className="auth-page">
       <div className="auth-side">
         <div className="auth-side-logo">
-          DOP<span>tv</span>
+          MEDIOVA
         </div>
         <h2>Turn WhatsApp Views Into Income</h2>
         <p>Connecting businesses with trusted, local WhatsApp Status audiences across Nigeria.</p>
@@ -88,7 +88,7 @@ export default function LoginPage() {
         <div className="auth-form-container">
           <div className="auth-form-header">
             <Link to="/" style={{ color: 'var(--brand-green)', fontWeight: '800', fontSize: '18px', display: 'inline-block', marginBottom: '16px' }}>
-              &larr; Back to DOPtv
+              &larr; Back to MEDIOVA
             </Link>
             <h1>Welcome Back</h1>
             <p>Log in to access your advertising or earnings dashboard</p>

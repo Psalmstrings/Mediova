@@ -6,13 +6,13 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('doptv_user');
+      const saved = localStorage.getItem('mediova_user') || localStorage.getItem('doptv_user');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   });
-  const [token, setToken] = useState(() => localStorage.getItem('doptv_token'));
+  const [token, setToken] = useState(() => localStorage.getItem('mediova_token') || localStorage.getItem('doptv_token'));
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -20,8 +20,8 @@ export const AuthProvider = ({ children }) => {
   const saveSession = useCallback((userData, tokenData) => {
     setUser(userData);
     setToken(tokenData);
-    localStorage.setItem('doptv_user', JSON.stringify(userData));
-    localStorage.setItem('doptv_token', tokenData);
+    localStorage.setItem('mediova_user', JSON.stringify(userData));
+    localStorage.setItem('mediova_token', tokenData);
   }, []);
 
   const logout = useCallback(() => {
@@ -29,6 +29,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setNotifications([]);
     setUnreadCount(0);
+    localStorage.removeItem('mediova_user');
+    localStorage.removeItem('mediova_token');
     localStorage.removeItem('doptv_user');
     localStorage.removeItem('doptv_token');
   }, []);
@@ -55,7 +57,7 @@ export const AuthProvider = ({ children }) => {
         const { data } = await getMe();
         if (data.success) {
           setUser(data.user);
-          localStorage.setItem('doptv_user', JSON.stringify(data.user));
+          localStorage.setItem('mediova_user', JSON.stringify(data.user));
         } else {
           logout();
         }

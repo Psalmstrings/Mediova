@@ -67,7 +67,7 @@ export default function VendorOrderDetail() {
   // WhatsApp Admin Link
   const waClean = adminWhatsapp.replace(/[^0-9]/g, '');
   const waText = encodeURIComponent(
-    `Hello DOPtv Team, I am contacting you regarding advertising order #${campaign.orderNumber} for "${campaign.title}".`
+    `Hello MEDIOVA Team, I am contacting you regarding advertising order #${campaign.orderNumber} for "${campaign.title}".`
   );
   const waUrl = `https://wa.me/${waClean}?text=${waText}`;
 

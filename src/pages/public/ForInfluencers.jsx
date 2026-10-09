@@ -27,7 +27,7 @@ export default function ForInfluencers() {
             <div style={{ fontSize: '36px', marginBottom: '12px' }}></div>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Zero Haggling</h3>
             <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>
-              No arguing with clients or waiting weeks for payment. DOPtv Admin handles all client agreements and guarantees fixed rewards.
+              No arguing with clients or waiting weeks for payment. MEDIOVA Admin handles all client agreements and guarantees fixed rewards.
             </p>
           </div>
           <div className="card" style={{ padding: '24px' }}>

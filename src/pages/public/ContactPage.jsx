@@ -9,14 +9,14 @@ export default function ContactPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setSent(true);
-    toast.success('Your message has been sent to the DOPtv support team!');
+    toast.success('Your message has been sent to the MEDIOVA support team!');
   };
 
   return (
     <div>
       <PublicNav />
       <div style={{ background: '#0f172a', color: 'white', padding: '60px 24px', textAlign: 'center' }}>
-        <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '8px' }}>Contact DOPtv</h1>
+        <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '8px' }}>Contact MEDIOVA</h1>
         <p style={{ color: '#94a3b8' }}>Get in touch with our advertising brokerage support team</p>
       </div>
 
@@ -40,7 +40,7 @@ export default function ContactPage() {
                 <span style={{ fontSize: '24px' }}>✉️</span>
                 <div>
                   <strong>Official Support Email</strong>
-                  <div style={{ color: '#64748b', fontSize: '14px' }}>support@doptv.ng</div>
+                  <div style={{ color: '#64748b', fontSize: '14px' }}>support@mediova.ng</div>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

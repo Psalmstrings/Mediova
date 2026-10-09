@@ -135,7 +135,7 @@ export default function RegisterPage() {
     return (
       <div className="auth-page">
         <div className="auth-side">
-          <div className="auth-side-logo">DOP<span>tv</span></div>
+          <div className="auth-side-logo">MEDIOVA</div>
           <h2>Verification Email Sent!</h2>
           <p>We've sent an activation link to your email address to confirm your identity.</p>
         </div>
@@ -173,7 +173,7 @@ export default function RegisterPage() {
     <div className="auth-page">
       <div className="auth-side">
         <div className="auth-side-logo">
-          DOP<span>tv</span>
+          MEDIOVA
         </div>
         <h2>{role === 'influencer' ? 'Get Paid for Status Views' : 'Reach Verified Audiences'}</h2>
         <p>
@@ -187,7 +187,7 @@ export default function RegisterPage() {
         <div className="auth-form-container" style={{ maxWidth: '520px' }}>
           <div className="auth-form-header">
             <Link to="/" style={{ color: 'var(--brand-green)', fontWeight: '800', fontSize: '18px', display: 'inline-block', marginBottom: '12px' }}>
-              &larr; Back to DOPtv
+              &larr; Back to MEDIOVA
             </Link>
             <h1>Create Account</h1>
             <p>Select your role and complete your profile</p>

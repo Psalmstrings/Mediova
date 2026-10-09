@@ -28,9 +28,9 @@ export default function ForgotPasswordPage() {
   return (
     <div className="auth-page">
       <div className="auth-side">
-        <div className="auth-side-logo">DOP<span>tv</span></div>
+        <div className="auth-side-logo">MEDIOVA</div>
         <h2>Account Recovery</h2>
-        <p>Recover access to your DOPtv influencer or vendor account.</p>
+        <p>Recover access to your MEDIOVA influencer or vendor account.</p>
       </div>
 
       <div className="auth-form-side">

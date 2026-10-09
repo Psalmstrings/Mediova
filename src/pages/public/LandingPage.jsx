@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const faqs = [
   {
-    q: 'How does DOPtv ensure authentic WhatsApp Status views?',
+    q: 'How does MEDIOVA ensure authentic WhatsApp Status views?',
     a: 'Every influencer is manually vetted. Reach metrics, screenshot submissions, and viewer location stamps are verified by our admin team before payout approval.',
   },
   {
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: 'Do advertisers talk directly to influencers?',
-    a: 'No. DOPtv is a fully managed brokerage. Advertisers place orders and submit creatives; our platform distributes assignments, verifies execution, and guarantees performance.',
+    a: 'No. MEDIOVA is a fully managed brokerage. Advertisers place orders and submit creatives; our platform distributes assignments, verifies execution, and guarantees performance.',
   },
   {
     q: 'Can any WhatsApp user become an influencer?',
@@ -46,7 +46,7 @@ const PublicNav = () => {
       <Link to="/" className="sidebar-brand" style={{ textDecoration: 'none' }}>
         <span className="brand-dot"></span>
         <span className="brand-name" style={{ color: 'var(--brand-dark)' }}>
-          DOP<span className="brand-accent">tv</span>
+          MEDIOVA
         </span>
       </Link>
       <div className="nav-links">
@@ -78,7 +78,7 @@ const Footer = () => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <span className="brand-dot"></span>
           <span style={{ fontSize: '24px', fontWeight: '900', color: 'white', letterSpacing: '-0.5px' }}>
-            DOP<span style={{ color: 'var(--brand-yellow)' }}>tv</span>
+            MEDIOVA
           </span>
         </div>
         <p className="footer-tagline">
@@ -110,7 +110,7 @@ const Footer = () => (
       </div>
     </div>
     <div className="footer-bottom">
-      <span>&copy; {new Date().getFullYear()} DOPtv Technology Marketplace. All rights reserved.</span>
+      <span>&copy; {new Date().getFullYear()} MEDIOVA Technology Marketplace. All rights reserved.</span>
       <span>Direct WhatsApp Audience Delivery</span>
     </div>
   </footer>
@@ -168,7 +168,7 @@ export default function LandingPage() {
             margin: '0 auto 36px',
             lineHeight: '1.6'
           }}>
-            DOPtv is the managed advertising bridge between high-growth Nigerian businesses and verified WhatsApp Status influencers.
+            MEDIOVA is the managed advertising bridge between high-growth Nigerian businesses and verified WhatsApp Status influencers.
           </p>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -214,7 +214,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '44px' }}>
             <h2 style={{ fontSize: '2.2rem', fontWeight: '900', color: 'var(--brand-dark)' }}>Built for Both Sides of the Market</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>Whether you hold the audience or the product, DOPtv makes growth seamless.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>Whether you hold the audience or the product, MEDIOVA makes growth seamless.</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
@@ -274,7 +274,7 @@ export default function LandingPage() {
             The Managed Brokerage Advantage
           </h2>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto 48px', fontSize: '15px' }}>
-            You never have to manage influencers or negotiate rates. DOPtv acts as the central coordinator.
+            You never have to manage influencers or negotiate rates. MEDIOVA acts as the central coordinator.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', textAlign: 'left' }}>

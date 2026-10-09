@@ -7,7 +7,7 @@ export default function HowItWorks() {
     <div>
       <PublicNav />
       <div style={{ background: 'linear-gradient(135deg, #0B1320 0%, #0F172A 100%)', color: 'white', padding: '70px 24px', textAlign: 'center', borderBottom: '3px solid var(--brand-yellow)' }}>
-        <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '12px', fontWeight: '900' }}>How DOPtv Operates</h1>
+        <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '12px', fontWeight: '900' }}>How MEDIOVA Operates</h1>
         <p style={{ color: 'rgba(255,255,255,0.75)', maxWidth: '600px', margin: '0 auto', fontSize: '1.1rem' }}>
           A managed advertising brokerage system connecting businesses with verified WhatsApp Status audiences.
         </p>
@@ -17,7 +17,7 @@ export default function HowItWorks() {
         <div style={{ background: 'var(--brand-green-light)', border: '1px solid var(--brand-green)', borderRadius: '16px', padding: '32px', marginBottom: '40px' }}>
           <h2 style={{ color: 'var(--brand-green-dark)', marginBottom: '14px', fontWeight: '800' }}>The Managed Brokerage Flow</h2>
           <p style={{ color: 'var(--brand-green-dark)', lineHeight: '1.7', fontSize: '15px' }}>
-            At DOPtv, <strong>Vendors and Influencers never directly interact or negotiate</strong>. The Admin functions as the central broker and controller: confirming payments, checking campaign requirements, matching suitable influencers by location and category, distributing gigs, verifying proof screenshots, and paying influencers.
+            At MEDIOVA, <strong>Vendors and Influencers never directly interact or negotiate</strong>. The Admin functions as the central broker and controller: confirming payments, checking campaign requirements, matching suitable influencers by location and category, distributing gigs, verifying proof screenshots, and paying influencers.
           </p>
         </div>
 

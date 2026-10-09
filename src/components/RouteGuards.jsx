@@ -6,7 +6,7 @@ export const LoadingScreen = () => (
   <div className="loading-screen">
     <div className="loading-logo">
       <span className="logo-icon"></span>
-      <span className="logo-text">DOPtv</span>
+      <span className="logo-text">MEDIOVA</span>
     </div>
     <div className="spinner" />
   </div>

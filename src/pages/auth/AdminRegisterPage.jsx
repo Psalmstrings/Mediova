@@ -36,7 +36,7 @@ export default function AdminRegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-side" style={{ background: '#090d16' }}>
-        <div className="auth-side-logo" style={{ color: '#10b981' }}> DOPtv Admin</div>
+        <div className="auth-side-logo" style={{ color: '#10b981' }}> MEDIOVA Admin</div>
         <h2>Brokerage Controller Setup</h2>
         <p>Restricted administrative registration for marketplace operations managers.</p>
       </div>
@@ -45,7 +45,7 @@ export default function AdminRegisterPage() {
         <div className="auth-form-container">
           <div className="auth-form-header">
             <Link to="/" style={{ color: '#059669', fontWeight: '800', fontSize: '18px', display: 'inline-block', marginBottom: '12px' }}>
-              ← DOPtv Home
+              ← MEDIOVA Home
             </Link>
             <h1>Admin Authorization</h1>
             <p>Enter administrative details and secret invite key</p>
@@ -70,7 +70,7 @@ export default function AdminRegisterPage() {
                 type="email"
                 required
                 className="form-control"
-                placeholder="admin@doptv.ng"
+                placeholder="admin@mediova.ng"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
