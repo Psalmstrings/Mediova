@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { login, resendVerification } from '../../services/api';
+import { login } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../components/ui/Toast';
 
@@ -8,8 +8,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
-  const [resending, setResending] = useState(false);
 
   const { saveSession } = useAuth();
   const navigate = useNavigate();
@@ -18,7 +16,6 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setUnverifiedEmail(null);
 
     try {
       const { data } = await login({ email, password });
@@ -35,27 +32,9 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      if (err.response?.data?.requiresVerification) {
-        setUnverifiedEmail(err.response.data.email || email);
-        toast.warning('Please verify your email address to access your dashboard.');
-      } else {
-        toast.error(err.response?.data?.message || 'Invalid email or password. Please try again.');
-      }
+      toast.error(err.response?.data?.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    if (!unverifiedEmail) return;
-    setResending(true);
-    try {
-      const { data } = await resendVerification({ email: unverifiedEmail });
-      toast.success(data.message || 'Verification link resent!');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to resend verification email.');
-    } finally {
-      setResending(false);
     }
   };
 
@@ -93,20 +72,6 @@ export default function LoginPage() {
             <h1>Welcome Back</h1>
             <p>Log in to access your advertising or earnings dashboard</p>
           </div>
-
-          {unverifiedEmail && (
-            <div className="alert alert-warning" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div><strong>Email Not Verified:</strong> Please check your inbox for the activation link.</div>
-              <button
-                type="button"
-                className="btn btn-sm btn-warning"
-                onClick={handleResend}
-                disabled={resending}
-              >
-                {resending ? 'Sending...' : 'Resend Verification Email'}
-              </button>
-            </div>
-          )}
 
           <form onSubmit={handleLogin}>
             <div className="form-group">

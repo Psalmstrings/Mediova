@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { register } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../components/ui/Toast';
 
 const nigerianStates = [
@@ -18,12 +19,12 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role') === 'vendor' ? 'vendor' : 'influencer';
 
+  const { saveSession } = useAuth();
   const [role, setRole] = useState(initialRole);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
-  const [devVerifyUrl, setDevVerifyUrl] = useState('');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -119,10 +120,12 @@ export default function RegisterPage() {
       const { data } = await register(payload);
 
       if (data.success) {
+        if (data.token && data.user) {
+          saveSession(data.user, data.token);
+        }
         setRegistered(true);
         setRegisteredEmail(formData.email);
-        setDevVerifyUrl(data.verificationUrl || '');
-        toast.success('Registration successful! Please verify your email.');
+        toast.success('Registration successful! Welcome to MEDIOVA.');
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed. Please check the fields and try again.');
@@ -132,33 +135,26 @@ export default function RegisterPage() {
   };
 
   if (registered) {
+    const dashPath = role === 'vendor' ? '/vendor' : '/influencer';
     return (
       <div className="auth-page">
         <div className="auth-side">
           <div className="auth-side-logo">MEDIOVA</div>
-          <h2>Verification Email Sent!</h2>
-          <p>We've sent an activation link to your email address to confirm your identity.</p>
+          <h2>Account Created Successfully!</h2>
+          <p>Your {role === 'vendor' ? 'Vendor / Advertiser' : 'WhatsApp Influencer'} account is active and ready to use.</p>
         </div>
         <div className="auth-form-side">
           <div className="auth-form-container" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>✉️</div>
-            <h1 style={{ fontSize: '1.75rem', marginBottom: '12px' }}>Verify Your Email Address</h1>
-            <p style={{ color: '#475569', lineHeight: '1.6', marginBottom: '24px' }}>
-              We sent a verification link to <strong>{registeredEmail}</strong>. Please click the link inside that email to activate your account.
+            <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
+            <h1 style={{ fontSize: '1.75rem', marginBottom: '12px' }}>Welcome to MEDIOVA!</h1>
+            <p style={{ color: '#475569', lineHeight: '1.6', marginBottom: '28px' }}>
+              Your account has been registered for <strong>{registeredEmail}</strong>. You can now access your dashboard immediately without any email verification.
             </p>
 
-            {devVerifyUrl && (
-              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '16px', borderRadius: '8px', marginBottom: '24px', textAlign: 'left' }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#065f46' }}> Quick Development Link:</span>
-                <div style={{ marginTop: '6px' }}>
-                  <a href={devVerifyUrl} className="btn btn-sm btn-primary">
-                    Verify Instantly Now →
-                  </a>
-                </div>
-              </div>
-            )}
-
-            <div style={{ marginTop: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <Link to={dashPath} className="btn btn-primary btn-block btn-lg">
+                Continue to Dashboard →
+              </Link>
               <Link to="/login" className="btn btn-secondary btn-block">
                 Go to Sign In
               </Link>

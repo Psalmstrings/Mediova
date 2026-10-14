@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api' ;
+// 'https://mediova-backend.onrender.com/api'
 const API = axios.create({
-  baseURL: 'https://mediova-backend.onrender.com/api',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
 });
