@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data } = await login({ email, password });
+      const { data } = await login({ email: email.trim(), password });
       if (data.success) {
         saveSession(data.user, data.token);
         toast.success(`Welcome back, ${data.user.name}!`);
@@ -32,7 +32,14 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid email or password. Please try again.');
+      const message =
+        err.response?.data?.message ||
+        (err.code === 'ECONNABORTED'
+          ? 'Server took too long to respond. Please try again.'
+          : err.message === 'Network Error'
+          ? 'Unable to connect to the server. Please check your internet connection.'
+          : 'Invalid email or password. Please try again.');
+      toast.error(message);
     } finally {
       setLoading(false);
     }

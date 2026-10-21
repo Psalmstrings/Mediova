@@ -5,7 +5,7 @@ const baseURL = import.meta.env.VITE_API_URL || 'https://mediova-backend.onrende
 const API = axios.create({
   baseURL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 30000,
+  timeout: 60000,
 });
 
 // Attach token from localStorage
@@ -22,11 +22,22 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('mediova_token');
-      localStorage.removeItem('mediova_user');
-      localStorage.removeItem('doptv_token');
-      localStorage.removeItem('doptv_user');
-      window.location.href = '/login';
+      // Do not redirect or purge storage if 401 was returned by login/register endpoints
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/login') ||
+                             url.includes('/auth/register') ||
+                             url.includes('/auth/admin-register') ||
+                             url.includes('/auth/forgot-password');
+
+      if (!isAuthEndpoint) {
+        localStorage.removeItem('mediova_token');
+        localStorage.removeItem('mediova_user');
+        localStorage.removeItem('doptv_token');
+        localStorage.removeItem('doptv_user');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -51,14 +62,22 @@ export const getInfluencerProfile = () => API.get('/influencers/profile');
 export const updateInfluencerProfile = (data) => API.put('/influencers/profile', data);
 export const updateAvailability = (data) => API.patch('/influencers/availability', data);
 export const updateBankDetails = (data) => API.put('/influencers/bank-details', data);
-export const submitReachProof = (formData) =>
-  API.post('/influencers/reach-proof', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const submitReachProof = (formData, onUploadProgress) =>
+  API.post('/influencers/reach-proof', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 180000, // 3 minutes for file uploads
+    onUploadProgress,
+  });
 export const getMyGigs = (params) => API.get('/influencers/gigs', { params });
 export const getGigDetails = (id) => API.get(`/influencers/gigs/${id}`);
 export const acceptGig = (id) => API.put(`/influencers/gigs/${id}/accept`);
 export const declineGig = (id, data) => API.put(`/influencers/gigs/${id}/decline`, data);
-export const submitGigProof = (id, formData) =>
-  API.post(`/influencers/gigs/${id}/submit`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const submitGigProof = (id, formData, onUploadProgress) =>
+  API.post(`/influencers/gigs/${id}/submit`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 180000, // 3 minutes for file uploads
+    onUploadProgress,
+  });
 export const getMyEarnings = () => API.get('/influencers/earnings');
 
 // =====================

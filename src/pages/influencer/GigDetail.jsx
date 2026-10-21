@@ -15,9 +15,12 @@ export default function InfluencerGigDetail() {
   // Proof Submission State
   const [statusPostFile, setStatusPostFile] = useState(null);
   const [viewsFile, setViewsFile] = useState(null);
+  const [statusPostPreview, setStatusPostPreview] = useState(null);
+  const [viewsPreview, setViewsPreview] = useState(null);
   const [reportedViews, setReportedViews] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [declineReason, setDeclineReason] = useState('');
   const [showDecline, setShowDecline] = useState(false);
 
@@ -63,6 +66,19 @@ export default function InfluencerGigDetail() {
     }
   };
 
+  // Helper: create a local preview URL from a File object
+  const handleStatusPostFileChange = (e) => {
+    const file = e.target.files[0];
+    setStatusPostFile(file || null);
+    setStatusPostPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const handleViewsFileChange = (e) => {
+    const file = e.target.files[0];
+    setViewsFile(file || null);
+    setViewsPreview(file ? URL.createObjectURL(file) : null);
+  };
+
   const handleSubmitProof = async (e) => {
     e.preventDefault();
 
@@ -71,12 +87,19 @@ export default function InfluencerGigDetail() {
       return;
     }
 
-    if (!statusPostFile && (!submission || submission.proofImages?.length === 0)) {
-      toast.warning('Please select at least one screenshot showing your posted WhatsApp Status.');
+    // Both screenshots are required on first submission
+    const hasExistingProof = submission?.proofImages?.length > 0;
+    if (!statusPostFile && !hasExistingProof) {
+      toast.warning('Please select a screenshot showing your posted WhatsApp Status.');
+      return;
+    }
+    if (!viewsFile && !hasExistingProof) {
+      toast.warning('Please select a screenshot showing your WhatsApp Status Views count.');
       return;
     }
 
     setSubmitting(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
       formData.append('reportedViews', reportedViews);
@@ -85,14 +108,23 @@ export default function InfluencerGigDetail() {
       if (statusPostFile) formData.append('proofImages', statusPostFile);
       if (viewsFile) formData.append('proofImages', viewsFile);
 
-      const { data } = await submitGigProof(id, formData);
+      const { data } = await submitGigProof(id, formData, (progressEvent) => {
+        const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadProgress(pct);
+      });
       toast.success(data.message || 'Proof submitted successfully! Admin will review shortly.');
       setGig(data.gig);
       setSubmission(data.submission);
+      // Clean up preview URLs
+      setStatusPostFile(null);
+      setViewsFile(null);
+      setStatusPostPreview(null);
+      setViewsPreview(null);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit proof.');
+      toast.error(err.response?.data?.message || 'Failed to submit proof. Please try again.');
     } finally {
       setSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -342,9 +374,16 @@ export default function InfluencerGigDetail() {
                         type="file"
                         accept="image/*"
                         className="form-control"
-                        onChange={(e) => setStatusPostFile(e.target.files[0])}
+                        onChange={handleStatusPostFileChange}
                       />
                       <span className="form-hint">Shows the flyer or video posted on your story.</span>
+                      {statusPostPreview && (
+                        <img
+                          src={statusPostPreview}
+                          alt="Status post preview"
+                          style={{ marginTop: '10px', width: '100%', maxHeight: '180px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                        />
+                      )}
                     </div>
 
                     <div className="form-group">
@@ -355,9 +394,16 @@ export default function InfluencerGigDetail() {
                         type="file"
                         accept="image/*"
                         className="form-control"
-                        onChange={(e) => setViewsFile(e.target.files[0])}
+                        onChange={handleViewsFileChange}
                       />
                       <span className="form-hint">Shows the "Views" counter on that specific status update.</span>
+                      {viewsPreview && (
+                        <img
+                          src={viewsPreview}
+                          alt="Views screenshot preview"
+                          style={{ marginTop: '10px', width: '100%', maxHeight: '180px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                        />
+                      )}
                     </div>
 
                     <div className="form-group">
@@ -386,13 +432,38 @@ export default function InfluencerGigDetail() {
                       />
                     </div>
 
+                    {/* Upload progress bar */}
+                    {submitting && uploadProgress > 0 && (
+                      <div style={{ marginTop: '12px', marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                          <span>Uploading screenshots…</span>
+                          <span>{uploadProgress}%</span>
+                        </div>
+                        <div style={{ background: '#e2e8f0', borderRadius: '99px', height: '8px', overflow: 'hidden' }}>
+                          <div
+                            style={{
+                              height: '100%',
+                              width: `${uploadProgress}%`,
+                              background: '#059669',
+                              borderRadius: '99px',
+                              transition: 'width 0.2s ease',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       type="submit"
                       className="btn btn-primary btn-block btn-lg"
                       disabled={submitting}
                       style={{ marginTop: '16px' }}
                     >
-                      {submitting ? 'Uploading Proof...' : 'Submit Completed Gig Proof →'}
+                      {submitting
+                        ? uploadProgress > 0
+                          ? `Uploading… ${uploadProgress}%`
+                          : 'Uploading Proof…'
+                        : 'Submit Completed Gig Proof →'}
                     </button>
                   </form>
                 )}
