@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../components/ui/Toast';
+import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -94,19 +95,20 @@ export default function LoginPage() {
             </div>
 
             <div className="form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label className="form-label" style={{ margin: 0 }}>Password <span className="required">*</span></label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '12px' }}></span>
                 <Link to="/forgot-password" style={{ fontSize: '13px', color: '#059669', fontWeight: '600' }}>
                   Forgot Password?
                 </Link>
               </div>
-              <input
-                type="password"
+              <PasswordInput
+                label="Password"
                 required
-                className="form-control"
+                name="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
               />
             </div>
 

@@ -94,11 +94,14 @@ const Footer = () => (
         </div>
       </div>
       <div className="footer-col">
-        <h4>Platform</h4>
+        <h4>Platform & Governance</h4>
         <div className="footer-links">
+          <Link to="/contact" className="footer-link">Contact & Support</Link>
           <Link to="/faq" className="footer-link">Help & FAQs</Link>
-          <Link to="/terms" className="footer-link">Terms of Service</Link>
-          <Link to="/privacy" className="footer-link">Privacy Policy</Link>
+          <Link to="/terms" className="footer-link">Terms & Confidentiality</Link>
+          <Link to="/privacy" className="footer-link">Privacy Policy (NDPA)</Link>
+          <Link to="/refund-policy" className="footer-link">Refund Policy</Link>
+          <Link to="/complaints-policy" className="footer-link">Complaints & Appeals</Link>
         </div>
       </div>
       <div className="footer-col">

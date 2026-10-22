@@ -3,11 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { getOrderOptions, createCampaign } from '../../services/api';
 import { toast } from '../../components/ui/Toast';
-
-const nigerianStates = [
-  'Lagos', 'Abuja (FCT)', 'Rivers', 'Oyo', 'Kano', 'Enugu', 'Delta', 'Anambra',
-  'Ogun', 'Kaduna', 'Edo', 'Imo', 'Akwa Ibom', 'Plateau', 'Ondo', 'Kwara', 'Other',
-];
+import { NIGERIAN_STATES, STATE_LGAS } from '../../config/locations';
 
 const ctaOptions = ['WhatsApp', 'Call', 'Website', 'Visit Store', 'Buy Now', 'Learn More', 'Send Message'];
 
@@ -41,12 +37,14 @@ export default function VendorPlaceAd() {
     targetValue: '',
     mediaFile: null,
     mediaPreview: null,
-    // Step 5
+    // Step 5: Multi-state targeting
+    targetStates: ['Lagos'],
+    isNationwide: false,
     state: 'Lagos',
     city: 'Lagos',
     lga: '',
-    area: '',
-    targetRadius: '5km',
+    area: 'General',
+    targetRadius: 'Statewide',
     // Step 6
     selectedPackage: null,
     requiredViews: 1000,
@@ -55,6 +53,8 @@ export default function VendorPlaceAd() {
     duration: '24 Hours',
     instructions: '',
   });
+
+  const [stateSearch, setStateSearch] = useState('');
 
   useEffect(() => {
     fetchOptions();
@@ -110,29 +110,80 @@ export default function VendorPlaceAd() {
     });
   };
 
+  const handleToggleState = (st) => {
+    if (formData.isNationwide) return;
+    const exists = formData.targetStates.includes(st);
+    if (exists) {
+      if (formData.targetStates.length === 1) {
+        toast.warning('At least one target state must be selected.');
+        return;
+      }
+      setFormData({
+        ...formData,
+        targetStates: formData.targetStates.filter((s) => s !== st),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        targetStates: [...formData.targetStates, st],
+      });
+    }
+  };
+
+  const handleToggleNationwide = () => {
+    const nextVal = !formData.isNationwide;
+    setFormData({
+      ...formData,
+      isNationwide: nextVal,
+      targetStates: nextVal ? ['Nationwide'] : ['Lagos'],
+      state: nextVal ? 'Nationwide' : 'Lagos',
+    });
+  };
+
+  const handleClearAllStates = () => {
+    if (formData.isNationwide) {
+      setFormData({ ...formData, isNationwide: false, targetStates: ['Lagos'], state: 'Lagos' });
+    } else {
+      setFormData({ ...formData, targetStates: ['Lagos'], state: 'Lagos' });
+    }
+    toast.info('Reset target location to Lagos.');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
 
     try {
       const dataPayload = new FormData();
-      dataPayload.append('title', formData.title);
-      dataPayload.append('description', formData.description);
+      dataPayload.append('title', formData.title.trim());
+      dataPayload.append('description', formData.description.trim());
       dataPayload.append('category', formData.category);
       dataPayload.append('objective', formData.objective);
-      dataPayload.append('adCopy', formData.adCopy);
-      dataPayload.append('callToAction[actionType]', formData.actionType);
-      dataPayload.append('callToAction[targetValue]', formData.targetValue);
-      dataPayload.append('targetLocation[state]', formData.state);
-      dataPayload.append('targetLocation[city]', formData.city);
-      dataPayload.append('targetLocation[lga]', formData.lga);
-      dataPayload.append('targetLocation[area]', formData.area || 'General');
-      dataPayload.append('targetRadius', formData.targetRadius);
+      dataPayload.append('adCopy', formData.adCopy || '');
+
+      const ctaData = {
+        actionType: formData.actionType,
+        targetValue: formData.targetValue || '',
+      };
+      dataPayload.append('callToAction', JSON.stringify(ctaData));
+
+      const locationData = {
+        state: formData.isNationwide ? 'Nationwide' : (formData.targetStates[0] || 'Lagos'),
+        targetStates: formData.isNationwide ? ['Nationwide'] : formData.targetStates,
+        isNationwide: Boolean(formData.isNationwide),
+        city: formData.city || '',
+        lga: formData.lga || '',
+        area: formData.area || 'General',
+        businessAddress: '',
+      };
+      dataPayload.append('targetLocation', JSON.stringify(locationData));
+      dataPayload.append('targetRadius', formData.targetRadius || 'Statewide');
       dataPayload.append('reachPackageId', formData.selectedPackage || '');
       dataPayload.append('requiredViews', formData.requiredViews);
       dataPayload.append('price', formData.price);
       dataPayload.append('duration', formData.duration);
-      dataPayload.append('instructions', formData.instructions);
+      dataPayload.append('instructions', formData.instructions || '');
 
       if (formData.mediaFile) {
         dataPayload.append('media', formData.mediaFile);
@@ -452,57 +503,187 @@ export default function VendorPlaceAd() {
             </div>
           )}
 
-          {/* STEP 5: Target Location */}
+          {/* STEP 5: Multi-State Target Location */}
           {step === 5 && (
             <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 5: Target Location</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                Specify where your target buyers reside. Admin will match influencers situated in or reaching these areas.
+              <h3 style={{ marginBottom: '8px' }}>Step 5: Target Location & Multi-State Coverage</h3>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px' }}>
+                Specify where your target buyers reside. You can select multiple states across Nigeria or target nationwide.
               </p>
 
+              {/* Nationwide Toggle Card */}
+              <div
+                onClick={handleToggleNationwide}
+                style={{
+                  padding: '16px 20px',
+                  borderRadius: '10px',
+                  border: formData.isNationwide ? '2px solid #059669' : '1px solid #cbd5e1',
+                  background: formData.isNationwide ? '#ecfdf5' : '#f8fafc',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '20px',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: '700', color: formData.isNationwide ? '#065f46' : '#1e293b' }}>
+                    🇳🇬 Nationwide Coverage (All 36 States & FCT Abuja)
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    Match verified influencers across all regions for maximum broad market reach.
+                  </div>
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: formData.isNationwide ? '#059669' : '#94a3b8' }}>
+                  {formData.isNationwide ? '✓ Selected' : '+ Select'}
+                </div>
+              </div>
+
+              {!formData.isNationwide && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>
+                      Target States ({formData.targetStates.length} selected) <span className="required">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-ghost"
+                      onClick={handleClearAllStates}
+                      style={{ fontSize: '12px' }}
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+
+                  {/* Selected Location Chips */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                    {formData.targetStates.map((st) => (
+                      <span
+                        key={st}
+                        style={{
+                          background: '#eff6ff',
+                          color: '#1e40af',
+                          border: '1px solid #bfdbfe',
+                          borderRadius: '20px',
+                          padding: '4px 12px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        {st}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleState(st)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#1e40af',
+                            cursor: 'pointer',
+                            padding: '0 2px',
+                            fontWeight: '800',
+                          }}
+                          aria-label={`Remove ${st}`}
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* State Filter Search */}
+                  <div className="form-group" style={{ marginBottom: '12px' }}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Search Nigerian states (e.g. Lagos, Rivers, Oyo, Kano)..."
+                      value={stateSearch}
+                      onChange={(e) => setStateSearch(e.target.value)}
+                    />
+                  </div>
+
+                  {/* State Badges Grid */}
+                  <div
+                    style={{
+                      maxHeight: '160px',
+                      overflowY: 'auto',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '6px',
+                      marginBottom: '20px',
+                      background: 'white',
+                    }}
+                  >
+                    {NIGERIAN_STATES.filter((s) =>
+                      s.toLowerCase().includes(stateSearch.toLowerCase())
+                    ).map((st) => {
+                      const isSel = formData.targetStates.includes(st);
+                      return (
+                        <button
+                          type="button"
+                          key={st}
+                          onClick={() => handleToggleState(st)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '16px',
+                            fontSize: '12px',
+                            border: isSel ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                            background: isSel ? '#eff6ff' : 'white',
+                            color: isSel ? '#1e40af' : '#475569',
+                            fontWeight: isSel ? '700' : '500',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isSel ? `✓ ${st}` : `+ ${st}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Geographic Coverage Summary Box */}
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  fontSize: '13px',
+                  color: '#334155',
+                  marginBottom: '20px',
+                }}
+              >
+                <strong>Geographical Scope:</strong>{' '}
+                {formData.isNationwide
+                  ? 'All Nigerian States (Nationwide Distribution)'
+                  : `${formData.targetStates.length} State(s): ${formData.targetStates.join(', ')}`}
+              </div>
+
+              {/* Detailed City & Area Info */}
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Target State <span className="required">*</span></label>
-                  <select
-                    className="form-control"
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  >
-                    {nigerianStates.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">City / Town</label>
+                  <label className="form-label">City / Town Focus (Optional)</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="e.g. Lagos, Ikeja"
+                    placeholder="e.g. Lagos, Ikeja, Port Harcourt, Ibadan"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   />
                 </div>
-              </div>
-
-              <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">LGA</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="e.g. Eti-Osa"
-                    value={formData.lga}
-                    onChange={(e) => setFormData({ ...formData, lga: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Area / Neighborhood <span className="required">*</span></label>
+                  <label className="form-label">Area / Focus Hub <span className="required">*</span></label>
                   <input
                     type="text"
                     required
                     className="form-control"
-                    placeholder="e.g. Lekki Phase 1"
+                    placeholder="e.g. Lekki, Commercial Districts, Island"
                     value={formData.area}
                     onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                   />
@@ -510,14 +691,17 @@ export default function VendorPlaceAd() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Target Radius (Optional)</label>
-                <input
-                  type="text"
+                <label className="form-label">Target Radius / Scope</label>
+                <select
                   className="form-control"
-                  placeholder="e.g. 5km around Lekki Phase 1"
                   value={formData.targetRadius}
                   onChange={(e) => setFormData({ ...formData, targetRadius: e.target.value })}
-                />
+                >
+                  <option value="Statewide">Statewide / Regional</option>
+                  <option value="Metropolitan Area">Metropolitan Area</option>
+                  <option value="10km Hub">Within 10km Commercial Radius</option>
+                  <option value="5km Local">Within 5km Local Neighborhood</option>
+                </select>
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
@@ -526,8 +710,12 @@ export default function VendorPlaceAd() {
                   type="button"
                   className="btn btn-primary"
                   onClick={() => {
-                    if (!formData.area) {
-                      toast.warning('Please enter a target area or neighborhood.');
+                    if (!formData.isNationwide && formData.targetStates.length === 0) {
+                      toast.warning('Please select at least one target state or choose Nationwide.');
+                      return;
+                    }
+                    if (!formData.area.trim()) {
+                      toast.warning('Please enter a target area or neighborhood focus.');
                       return;
                     }
                     setStep(6);
@@ -646,7 +834,15 @@ export default function VendorPlaceAd() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                   <span style={{ color: '#64748b' }}>Target Location:</span>
-                  <strong>{formData.area}, {formData.state} ({formData.targetRadius})</strong>
+                  <strong style={{ color: '#0f172a', textAlign: 'right', maxWidth: '60%' }}>
+                    {formData.isNationwide
+                      ? '🇳🇬 Nationwide (All 36 States & FCT Abuja)'
+                      : `${formData.targetStates.join(', ')} (${formData.area})`}
+                  </strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                  <span style={{ color: '#64748b' }}>Target Scope:</span>
+                  <strong>{formData.targetRadius}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                   <span style={{ color: '#64748b' }}>Required Reach:</span>
@@ -662,8 +858,17 @@ export default function VendorPlaceAd() {
                 </div>
               </div>
 
-              <div className="alert alert-info">
+              <div className="alert alert-info" style={{ fontSize: '13px', lineHeight: '1.6' }}>
                 ℹ️ <strong>Manual Payment Notice:</strong> After submission, you will be connected with our Admin brokerage team on WhatsApp to confirm payment via bank transfer.
+                Please review our{' '}
+                <Link to="/refund-policy" target="_blank" style={{ color: '#059669', fontWeight: '700', textDecoration: 'underline' }}>
+                  Refund Policy
+                </Link>{' '}
+                and{' '}
+                <Link to="/terms" target="_blank" style={{ color: '#059669', fontWeight: '700', textDecoration: 'underline' }}>
+                  Terms & Confidentiality
+                </Link>{' '}
+                before committing payment.
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
@@ -674,7 +879,7 @@ export default function VendorPlaceAd() {
                   disabled={submitting}
                   onClick={handleSubmit}
                 >
-                  {submitting ? 'Submitting Order...' : 'Submit Advertising Request →'}
+                  {submitting ? 'Submitting Order to Broker...' : 'Submit Advertising Request →'}
                 </button>
               </div>
             </div>

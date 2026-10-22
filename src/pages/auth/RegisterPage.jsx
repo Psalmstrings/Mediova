@@ -3,11 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { register } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../components/ui/Toast';
-
-const nigerianStates = [
-  'Lagos', 'Abuja (FCT)', 'Rivers', 'Oyo', 'Kano', 'Enugu', 'Delta', 'Anambra',
-  'Ogun', 'Kaduna', 'Edo', 'Imo', 'Akwa Ibom', 'Plateau', 'Ondo', 'Kwara', 'Other',
-];
+import PhoneInput from '../../components/ui/PhoneInput';
+import PasswordInput, { checkPasswordCriteria } from '../../components/ui/PasswordInput';
+import { NIGERIAN_STATES, STATE_LGAS, isValidPhoneNumber } from '../../config/locations';
 
 const categoriesList = [
   'Fashion', 'Beauty', 'Electronics', 'Technology', 'Food', 'Restaurants',
@@ -33,10 +31,11 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    // Location
+    // Country & Location
+    country: 'Nigeria',
     state: 'Lagos',
     city: 'Lagos',
-    lga: '',
+    lga: 'Eti-Osa (Ikoyi/Victoria Island/Lekki)',
     area: '',
     additionalAreas: '',
     // Influencer
@@ -57,6 +56,17 @@ export default function RegisterPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleStateChange = (e) => {
+    const newState = e.target.value;
+    const lgas = STATE_LGAS[newState] || [];
+    setFormData({
+      ...formData,
+      state: newState,
+      lga: lgas.length > 0 ? lgas[0] : '',
+      city: newState,
+    });
+  };
+
   const handleCategoryToggle = (cat) => {
     const exists = formData.selectedCategories.includes(cat);
     if (exists) {
@@ -72,16 +82,42 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match. Please check and re-enter.');
+  const handleStep1Next = () => {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.password) {
+      toast.warning('Please fill in all required fields marked with *.');
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters long.');
+    if (!isValidPhoneNumber(formData.phone)) {
+      toast.error('Please provide a valid international telephone number.');
+      return;
+    }
+
+    if (role === 'influencer' && formData.whatsappNumber && !isValidPhoneNumber(formData.whatsappNumber)) {
+      toast.error('Please provide a valid WhatsApp number.');
+      return;
+    }
+
+    const criteria = checkPasswordCriteria(formData.password);
+    const metCount = Object.values(criteria).filter(Boolean).length;
+    if (metCount < 5) {
+      toast.error('Password does not satisfy all complexity requirements (8+ chars, upper, lower, number, special char).');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match. Please re-enter.');
+      return;
+    }
+
+    setStep(2);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.area.trim()) {
+      toast.warning('Please specify your Area / Neighborhood.');
       return;
     }
 
@@ -89,15 +125,15 @@ export default function RegisterPage() {
 
     try {
       const payload = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
         password: formData.password,
         role,
         state: formData.state,
-        city: formData.city,
-        lga: formData.lga,
-        area: formData.area || 'General',
+        city: formData.city.trim(),
+        lga: formData.lga.trim(),
+        area: formData.area.trim(),
       };
 
       if (role === 'influencer') {
@@ -108,13 +144,13 @@ export default function RegisterPage() {
           ? formData.additionalAreas.split(',').map((s) => s.trim()).filter(Boolean)
           : [];
       } else {
-        payload.businessName = formData.businessName || formData.name;
-        payload.contactPerson = formData.contactPerson || formData.name;
+        payload.businessName = formData.businessName.trim() || formData.name.trim();
+        payload.contactPerson = formData.contactPerson.trim() || formData.name.trim();
         payload.businessCategory = formData.businessCategory;
-        payload.description = formData.description;
-        payload.businessAddress = formData.businessAddress;
-        payload.website = formData.website;
-        payload.socialLinks = { instagram: formData.instagram };
+        payload.description = formData.description.trim();
+        payload.businessAddress = formData.businessAddress.trim();
+        payload.website = formData.website.trim();
+        payload.socialLinks = { instagram: formData.instagram.trim() };
       }
 
       const { data } = await register(payload);
@@ -148,7 +184,7 @@ export default function RegisterPage() {
             <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
             <h1 style={{ fontSize: '1.75rem', marginBottom: '12px' }}>Welcome to MEDIOVA!</h1>
             <p style={{ color: '#475569', lineHeight: '1.6', marginBottom: '28px' }}>
-              Your account has been registered for <strong>{registeredEmail}</strong>. You can now access your dashboard immediately without any email verification.
+              Your account has been registered for <strong>{registeredEmail}</strong>. You can now access your dashboard immediately.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -165,45 +201,46 @@ export default function RegisterPage() {
     );
   }
 
+  const currentLgas = STATE_LGAS[formData.state] || [];
+
   return (
     <div className="auth-page">
       <div className="auth-side">
-        <div className="auth-side-logo">
-          MEDIOVA
-        </div>
-        <h2>{role === 'influencer' ? 'Get Paid for Status Views' : 'Reach Verified Audiences'}</h2>
+        <div className="auth-side-logo">MEDIOVA</div>
+        <h2>Direct WhatsApp Reach Across Nigeria</h2>
         <p>
-          {role === 'influencer'
-            ? 'Monetize your daily WhatsApp status views through approved advertising campaigns.'
-            : 'Grow your business with location-targeted micro-influencer campaigns across Nigeria.'}
+          Connect verified Nigerian WhatsApp creators with growing businesses for high-converting Status promotions.
         </p>
+        <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(255,255,255,0.08)', borderRadius: '8px', fontSize: '13px' }}>
+          <strong>📍 Operating Coverage:</strong> Nigeria (All 36 States & FCT Abuja). International brand registrations supported with standard calling codes.
+        </div>
       </div>
 
       <div className="auth-form-side">
-        <div className="auth-form-container" style={{ maxWidth: '520px' }}>
+        <div className="auth-form-container">
           <div className="auth-form-header">
-            <Link to="/" style={{ color: 'var(--brand-green)', fontWeight: '800', fontSize: '18px', display: 'inline-block', marginBottom: '12px' }}>
-              &larr; Back to MEDIOVA
+            <Link to="/" style={{ color: '#059669', fontWeight: '800', fontSize: '18px', display: 'inline-block', marginBottom: '16px' }}>
+              MEDIOVA
             </Link>
-            <h1>Create Account</h1>
-            <p>Select your role and complete your profile</p>
+            <h1>Create an Account</h1>
+            <p>Join Nigeria's premier WhatsApp Status advertising marketplace</p>
           </div>
 
-          {/* Role Selector */}
-          <div className="role-selector">
+          {/* Role Selector Tabs */}
+          <div className="role-selector" style={{ marginBottom: '24px' }}>
             <div
               className={`role-option ${role === 'influencer' ? 'selected' : ''}`}
               onClick={() => { setRole('influencer'); setStep(1); }}
             >
-              <div className="role-option-icon"></div>
+              <div className="role-option-icon">📱</div>
               <div className="role-option-label">WhatsApp Influencer</div>
-              <div className="role-option-desc">Earn from status views</div>
+              <div className="role-option-desc">Monetize your Status views</div>
             </div>
             <div
               className={`role-option ${role === 'vendor' ? 'selected' : ''}`}
               onClick={() => { setRole('vendor'); setStep(1); }}
             >
-              <div className="role-option-icon"></div>
+              <div className="role-option-icon">💼</div>
               <div className="role-option-label">Business / Vendor</div>
               <div className="role-option-desc">Advertise your business</div>
             </div>
@@ -213,9 +250,11 @@ export default function RegisterPage() {
             {step === 1 && (
               <>
                 <h4 style={{ marginBottom: '16px', color: '#0f172a' }}>Step 1: Account Information</h4>
+
                 <div className="form-group">
-                  <label className="form-label">Full Name <span className="required">*</span></label>
+                  <label className="form-label" htmlFor="reg-name">Full Name <span className="required">*</span></label>
                   <input
+                    id="reg-name"
                     type="text"
                     required
                     name="name"
@@ -227,8 +266,9 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Email Address <span className="required">*</span></label>
+                  <label className="form-label" htmlFor="reg-email">Email Address <span className="required">*</span></label>
                   <input
+                    id="reg-email"
                     type="email"
                     required
                     name="email"
@@ -240,78 +280,57 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Phone Number <span className="required">*</span></label>
-                    <input
-                      type="tel"
-                      required
-                      name="phone"
-                      className="form-control"
-                      placeholder="08012345678"
-                      value={formData.phone}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <PhoneInput
+                    label="Phone Number"
+                    required
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="08012345678"
+                    hint="International format normalized automatically."
+                  />
                   {role === 'influencer' && (
-                    <div className="form-group">
-                      <label className="form-label">WhatsApp Number <span className="required">*</span></label>
-                      <input
-                        type="tel"
-                        required
-                        name="whatsappNumber"
-                        className="form-control"
-                        placeholder="08012345678"
-                        value={formData.whatsappNumber}
-                        onChange={handleChange}
-                      />
-                    </div>
+                    <PhoneInput
+                      label="WhatsApp Number"
+                      required
+                      name="whatsappNumber"
+                      value={formData.whatsappNumber}
+                      onChange={handleChange}
+                      placeholder="08012345678"
+                      hint="Where gig updates are confirmed."
+                    />
                   )}
                 </div>
 
                 <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Password <span className="required">*</span></label>
-                    <input
-                      type="password"
-                      required
-                      name="password"
-                      className="form-control"
-                      placeholder="Min. 6 chars"
-                      value={formData.password}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Confirm Password <span className="required">*</span></label>
-                    <input
-                      type="password"
-                      required
-                      name="confirmPassword"
-                      className="form-control"
-                      placeholder="Repeat password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <PasswordInput
+                    label="Password"
+                    required
+                    name="password"
+                    placeholder="Min. 8 characters"
+                    value={formData.password}
+                    onChange={handleChange}
+                    showCriteria={true}
+                    autoComplete="new-password"
+                  />
+                  <PasswordInput
+                    label="Confirm Password"
+                    required
+                    name="confirmPassword"
+                    placeholder="Repeat password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
                 </div>
 
                 <button
                   type="button"
                   className="btn btn-primary btn-block"
-                  style={{ marginTop: '16px' }}
-                  onClick={() => {
-                    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
-                      toast.warning('Please fill in all required fields to proceed.');
-                      return;
-                    }
-                    if (formData.password !== formData.confirmPassword) {
-                      toast.error('Passwords do not match.');
-                      return;
-                    }
-                    setStep(2);
-                  }}
+                  style={{ marginTop: '20px' }}
+                  onClick={handleStep1Next}
                 >
-                  Continue to Next Step →
+                  Continue to Step 2: Location & Reach →
                 </button>
               </>
             )}
@@ -323,58 +342,83 @@ export default function RegisterPage() {
                     {role === 'influencer' ? 'Step 2: Location & Reach Details' : 'Step 2: Business & Location Details'}
                   </h4>
                   <button type="button" className="btn btn-sm btn-ghost" onClick={() => setStep(1)}>
-                    ← Back
+                    ← Back to Step 1
                   </button>
                 </div>
 
-                {/* Common Location Fields */}
+                <div className="alert alert-info" style={{ fontSize: '13px', marginBottom: '16px' }}>
+                  📍 <strong>Geographic Scope:</strong> Audience distribution and verified gigs currently operate across Nigeria. Select your state and local government area.
+                </div>
+
+                {/* Dependent Location Fields */}
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">State <span className="required">*</span></label>
+                    <label className="form-label" htmlFor="reg-country">Country</label>
                     <select
+                      id="reg-country"
+                      name="country"
+                      className="form-control"
+                      value={formData.country}
+                      onChange={handleChange}
+                    >
+                      <option value="Nigeria">Nigeria 🇳🇬</option>
+                      <option value="Ghana">Ghana 🇬🇭</option>
+                      <option value="Kenya">Kenya 🇰🇪</option>
+                      <option value="Other">Other / International</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="reg-state">State / Region <span className="required">*</span></label>
+                    <select
+                      id="reg-state"
                       name="state"
                       className="form-control"
                       value={formData.state}
-                      onChange={handleChange}
+                      onChange={handleStateChange}
                     >
-                      {nigerianStates.map((s) => (
+                      {NIGERIAN_STATES.map((s) => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">City / Town</label>
-                    <input
-                      type="text"
-                      name="city"
-                      className="form-control"
-                      placeholder="e.g. Lagos, Ikeja"
-                      value={formData.city}
-                      onChange={handleChange}
-                    />
-                  </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">LGA (Local Govt Area)</label>
-                    <input
-                      type="text"
-                      name="lga"
-                      className="form-control"
-                      placeholder="e.g. Eti-Osa"
-                      value={formData.lga}
-                      onChange={handleChange}
-                    />
+                    <label className="form-label" htmlFor="reg-lga">LGA (Local Government Area)</label>
+                    {currentLgas.length > 0 ? (
+                      <select
+                        id="reg-lga"
+                        name="lga"
+                        className="form-control"
+                        value={formData.lga}
+                        onChange={handleChange}
+                      >
+                        {currentLgas.map((l) => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        id="reg-lga"
+                        type="text"
+                        name="lga"
+                        className="form-control"
+                        placeholder="e.g. Local Area"
+                        value={formData.lga}
+                        onChange={handleChange}
+                      />
+                    )}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Area / Neighborhood <span className="required">*</span></label>
+                    <label className="form-label" htmlFor="reg-area">Area / Neighborhood <span className="required">*</span></label>
                     <input
+                      id="reg-area"
                       type="text"
                       required
                       name="area"
                       className="form-control"
-                      placeholder="e.g. Lekki Phase 1"
+                      placeholder="e.g. Lekki Phase 1, Yaba, Ikeja"
                       value={formData.area}
                       onChange={handleChange}
                     />
@@ -384,20 +428,20 @@ export default function RegisterPage() {
                 {role === 'influencer' ? (
                   <>
                     <div className="form-group">
-                      <label className="form-label">Other Areas You Can Reach</label>
+                      <label className="form-label">Other Areas You Reach (Optional)</label>
                       <input
                         type="text"
                         name="additionalAreas"
                         className="form-control"
-                        placeholder="e.g. Victoria Island, Ikoyi, Ajah (comma separated)"
+                        placeholder="e.g. Victoria Island, Ikoyi, Ajah (comma-separated)"
                         value={formData.additionalAreas}
                         onChange={handleChange}
                       />
-                      <span className="form-hint">Vendors search for influencers who reach neighboring districts.</span>
+                      <span className="form-hint">Enables advertisers to match with you when targeting neighboring districts.</span>
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Average WhatsApp Status Views</label>
+                      <label className="form-label">Estimated WhatsApp Status Views</label>
                       <input
                         type="number"
                         name="averageViews"
@@ -407,11 +451,11 @@ export default function RegisterPage() {
                         value={formData.averageViews}
                         onChange={handleChange}
                       />
-                      <span className="form-hint">You will be asked to upload screenshots to verify this figure.</span>
+                      <span className="form-hint">You will submit status screenshots in your dashboard to verify this metric.</span>
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Categories You're Comfortable Promoting</label>
+                      <label className="form-label">Promotion Categories</label>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
                         {categoriesList.map((cat) => {
                           const selected = formData.selectedCategories.includes(cat);
@@ -441,8 +485,9 @@ export default function RegisterPage() {
                 ) : (
                   <>
                     <div className="form-group">
-                      <label className="form-label">Business / Company Name <span className="required">*</span></label>
+                      <label className="form-label" htmlFor="reg-bname">Business / Company Name <span className="required">*</span></label>
                       <input
+                        id="reg-bname"
                         type="text"
                         required
                         name="businessName"
@@ -455,8 +500,9 @@ export default function RegisterPage() {
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label className="form-label">Business Category</label>
+                        <label className="form-label" htmlFor="reg-bcat">Business Category</label>
                         <select
+                          id="reg-bcat"
                           name="businessCategory"
                           className="form-control"
                           value={formData.businessCategory}
@@ -468,8 +514,9 @@ export default function RegisterPage() {
                         </select>
                       </div>
                       <div className="form-group">
-                        <label className="form-label">Instagram Handle</label>
+                        <label className="form-label" htmlFor="reg-ig">Instagram Handle (Optional)</label>
                         <input
+                          id="reg-ig"
                           type="text"
                           name="instagram"
                           className="form-control"
@@ -481,8 +528,9 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Business Address</label>
+                      <label className="form-label" htmlFor="reg-baddr">Business Address (Optional)</label>
                       <input
+                        id="reg-baddr"
                         type="text"
                         name="businessAddress"
                         className="form-control"
@@ -494,11 +542,26 @@ export default function RegisterPage() {
                   </>
                 )}
 
+                <div style={{ margin: '20px 0 16px', fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>
+                  By registering, you acknowledge and agree to MEDIOVA's{' '}
+                  <Link to="/terms" target="_blank" style={{ color: '#059669', textDecoration: 'underline' }}>
+                    Terms of Service & Confidentiality
+                  </Link>
+                  ,{' '}
+                  <Link to="/privacy" target="_blank" style={{ color: '#059669', textDecoration: 'underline' }}>
+                    Privacy Policy (NDPA 2023)
+                  </Link>
+                  , and{' '}
+                  <Link to="/refund-policy" target="_blank" style={{ color: '#059669', textDecoration: 'underline' }}>
+                    Refund Policy
+                  </Link>
+                  .
+                </div>
+
                 <button
                   type="submit"
                   className="btn btn-primary btn-block btn-lg"
                   disabled={loading}
-                  style={{ marginTop: '20px' }}
                 >
                   {loading ? 'Submitting Registration...' : 'Complete Registration →'}
                 </button>

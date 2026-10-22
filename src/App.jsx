@@ -12,6 +12,8 @@ import FAQPage from './pages/public/FAQPage';
 import ContactPage from './pages/public/ContactPage';
 import TermsPage from './pages/public/TermsPage';
 import PrivacyPage from './pages/public/PrivacyPage';
+import RefundPolicyPage from './pages/public/RefundPolicyPage';
+import ComplaintsPolicyPage from './pages/public/ComplaintsPolicyPage';
 import NotFoundPage from './pages/public/NotFoundPage';
 
 // Auth Pages
@@ -57,6 +59,12 @@ import AdminOrders from './pages/admin/Orders';
 import AdminGigs from './pages/admin/Gigs';
 import AdminGigDetail from './pages/admin/GigDetail';
 import AdminPayments from './pages/admin/Payments';
+import AdminRefunds from './pages/admin/AdminRefunds';
+import AdminComplaints from './pages/admin/AdminComplaints';
+import AdminSupportTickets from './pages/admin/AdminSupportTickets';
+
+// Shared Pages
+import UserComplaints from './pages/shared/UserComplaints';
 
 import './index.css';
 
@@ -77,6 +85,8 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
+          <Route path="/complaints-policy" element={<ComplaintsPolicyPage />} />
 
           {/* Auth */}
           <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
@@ -92,6 +102,7 @@ function App() {
           <Route path="/influencer/gigs" element={<ProtectedRoute role="influencer"><InfluencerGigs /></ProtectedRoute>} />
           <Route path="/influencer/gigs/:id" element={<ProtectedRoute role="influencer"><InfluencerGigDetail /></ProtectedRoute>} />
           <Route path="/influencer/earnings" element={<ProtectedRoute role="influencer"><InfluencerEarnings /></ProtectedRoute>} />
+          <Route path="/influencer/complaints" element={<ProtectedRoute role="influencer"><UserComplaints role="influencer" /></ProtectedRoute>} />
           <Route path="/influencer/profile" element={<ProtectedRoute role="influencer"><InfluencerProfile /></ProtectedRoute>} />
           <Route path="/influencer/notifications" element={<ProtectedRoute role="influencer"><InfluencerNotifications /></ProtectedRoute>} />
 
@@ -102,6 +113,7 @@ function App() {
           <Route path="/vendor/advertise" element={<ProtectedRoute role="vendor"><VendorPlaceAd /></ProtectedRoute>} />
           <Route path="/vendor/orders" element={<ProtectedRoute role="vendor"><VendorOrders /></ProtectedRoute>} />
           <Route path="/vendor/orders/:id" element={<ProtectedRoute role="vendor"><VendorOrderDetail /></ProtectedRoute>} />
+          <Route path="/vendor/complaints" element={<ProtectedRoute role="vendor"><UserComplaints role="vendor" /></ProtectedRoute>} />
           <Route path="/vendor/profile" element={<ProtectedRoute role="vendor"><VendorProfile /></ProtectedRoute>} />
           <Route path="/vendor/notifications" element={<ProtectedRoute role="vendor"><VendorNotifications /></ProtectedRoute>} />
 
@@ -121,6 +133,9 @@ function App() {
           <Route path="/admin/gigs/:id" element={<ProtectedRoute role="admin"><AdminGigDetail /></ProtectedRoute>} />
           <Route path="/admin/submissions" element={<ProtectedRoute role="admin"><AdminGigSubmissions /></ProtectedRoute>} />
           <Route path="/admin/payments" element={<ProtectedRoute role="admin"><AdminPayments /></ProtectedRoute>} />
+          <Route path="/admin/refunds" element={<ProtectedRoute role="admin"><AdminRefunds /></ProtectedRoute>} />
+          <Route path="/admin/complaints" element={<ProtectedRoute role="admin"><AdminComplaints /></ProtectedRoute>} />
+          <Route path="/admin/support" element={<ProtectedRoute role="admin"><AdminSupportTickets /></ProtectedRoute>} />
           <Route path="/admin/earnings" element={<ProtectedRoute role="admin"><AdminEarnings /></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute role="admin"><AdminCategories /></ProtectedRoute>} />
           <Route path="/admin/packages" element={<ProtectedRoute role="admin"><AdminPackages /></ProtectedRoute>} />

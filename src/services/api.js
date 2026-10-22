@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || 'https://mediova-backend.onrender.com/api' ;
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api' ;
 // 'https://mediova-backend.onrender.com/api'
 const API = axios.create({
   baseURL,
@@ -127,10 +127,40 @@ export const adminGetSettings = () => API.get('/admin/settings');
 export const adminUpdateSettings = (data) => API.put('/admin/settings', data);
 
 // =====================
+// REFUNDS (VENDOR)
+// =====================
+export const submitRefundRequest = (data) => API.post('/vendors/refunds', data);
+export const getMyRefundRequests = () => API.get('/vendors/refunds');
+
+// =====================
+// COMPLAINTS & APPEALS
+// =====================
+export const submitComplaint = (data) => API.post('/complaints', data);
+export const getMyComplaints = () => API.get('/complaints/my');
+export const getComplaintDetails = (id) => API.get(`/complaints/${id}`);
+
+// =====================
+// SUPPORT TICKETS
+// =====================
+export const submitSupportTicket = (data) => API.post('/support/tickets', data);
+export const getMySupportTickets = () => API.get('/support/my-tickets');
+
+// =====================
 // NOTIFICATIONS
 // =====================
 export const getNotifications = () => API.get('/notifications');
 export const markNotificationRead = (id) => API.patch(`/notifications/${id}/read`);
 export const markAllNotificationsRead = () => API.patch('/notifications/read-all');
+
+// =====================
+// ADMIN REFUNDS, COMPLAINTS & SUPPORT
+// =====================
+export const adminGetRefunds = (params) => API.get('/admin/refunds', { params });
+export const adminUpdateRefund = (id, data) => API.patch(`/admin/refunds/${id}`, data);
+export const adminGetComplaints = (params) => API.get('/admin/complaints', { params });
+export const adminGetComplaint = (id) => API.get(`/admin/complaints/${id}`);
+export const adminUpdateComplaint = (id, data) => API.patch(`/admin/complaints/${id}`, data);
+export const adminGetSupportTickets = (params) => API.get('/admin/support-tickets', { params });
+export const adminUpdateSupportTicket = (id, data) => API.patch(`/admin/support-tickets/${id}`, data);
 
 export default API;

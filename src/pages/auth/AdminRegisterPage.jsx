@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { registerAdmin } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../components/ui/Toast';
+import PasswordInput from '../../components/ui/PasswordInput';
 
 export default function AdminRegisterPage() {
   const [formData, setFormData] = useState({
@@ -76,17 +77,16 @@ export default function AdminRegisterPage() {
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Password <span className="required">*</span></label>
-              <input
-                type="password"
-                required
-                className="form-control"
-                placeholder="Min. 6 characters"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
+            <PasswordInput
+              label="Password"
+              required
+              name="password"
+              placeholder="Min. 8 characters"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              showCriteria={true}
+              autoComplete="new-password"
+            />
 
             <div className="form-group">
               <label className="form-label">Admin Registration Secret <span className="required">*</span></label>

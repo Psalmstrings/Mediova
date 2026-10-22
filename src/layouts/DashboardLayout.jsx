@@ -10,6 +10,7 @@ const influencerNav = [
   { label: 'Dashboard', to: '/influencer/dashboard' },
   { label: 'Available Gigs', to: '/influencer/gigs' },
   { label: 'Earnings & Payouts', to: '/influencer/earnings' },
+  { label: 'Disputes & Appeals', to: '/influencer/complaints' },
   { label: 'Notifications', to: '/influencer/notifications', notif: true },
   { label: 'Profile & Reach', to: '/influencer/profile' },
 ];
@@ -19,6 +20,7 @@ const vendorNav = [
   { label: 'Dashboard', to: '/vendor/dashboard' },
   { label: 'Place Advertisement', to: '/vendor/advertise', highlight: true },
   { label: 'My Orders', to: '/vendor/orders' },
+  { label: 'Disputes & Appeals', to: '/vendor/complaints' },
   { label: 'Notifications', to: '/vendor/notifications', notif: true },
   { label: 'Account Profile', to: '/vendor/profile' },
 ];
@@ -37,8 +39,11 @@ const adminNav = [
   { label: 'Influencers', to: '/admin/influencers' },
   { label: 'Vendors', to: '/admin/vendors' },
   { label: 'All Users', to: '/admin/users' },
-  { section: 'Finance & Config' },
+  { section: 'Finance & Governance' },
   { label: 'Payments & Payouts', to: '/admin/payments' },
+  { label: 'Refund Requests', to: '/admin/refunds' },
+  { label: 'Complaints & Appeals', to: '/admin/complaints' },
+  { label: 'Support Inquiries', to: '/admin/support' },
   { label: 'Categories', to: '/admin/categories' },
   { label: 'Reach Packages', to: '/admin/packages' },
   { label: 'Platform Settings', to: '/admin/settings' },

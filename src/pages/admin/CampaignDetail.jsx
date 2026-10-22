@@ -52,7 +52,14 @@ export default function AdminCampaignDetail() {
   const runMatching = async (camp) => {
     try {
       setMatchingLoading(true);
+      const isNationwide = camp.isNationwide || camp.targetLocation?.isNationwide || false;
+      const targetStates = camp.targetStates?.length
+        ? camp.targetStates
+        : (camp.targetLocation?.state ? [camp.targetLocation.state] : []);
+
       const params = {
+        isNationwide: isNationwide ? 'true' : 'false',
+        states: targetStates.join(','),
         state: camp.targetLocation?.state || '',
         area: camp.targetLocation?.area || '',
         category: camp.category || '',
@@ -179,7 +186,18 @@ export default function AdminCampaignDetail() {
               <span className="badge badge-muted">{campaign.category}</span>
             </div>
             <div style={{ color: '#64748b', fontSize: '13px', marginTop: '6px' }}>
-              Advertiser: <strong>{campaign.vendorId?.name}</strong> ({campaign.vendorId?.email}) •  Target: <strong>{campaign.targetLocation?.area}, {campaign.targetLocation?.state}</strong>
+              Advertiser: <strong>{campaign.vendorId?.name}</strong> ({campaign.vendorId?.email}) • Target:{' '}
+              {campaign.isNationwide ? (
+                <span className="badge badge-success" style={{ marginLeft: '4px' }}>Nationwide (All States)</span>
+              ) : campaign.targetStates?.length > 0 ? (
+                <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '4px', marginLeft: '4px' }}>
+                  {campaign.targetStates.map((st) => (
+                    <span key={st} className="badge badge-outline" style={{ fontSize: '11px' }}>{st}</span>
+                  ))}
+                </span>
+              ) : (
+                <strong>{campaign.targetLocation?.area ? `${campaign.targetLocation.area}, ` : ''}{campaign.targetLocation?.state || 'Not specified'}</strong>
+              )}
             </div>
           </div>
 
@@ -247,7 +265,7 @@ export default function AdminCampaignDetail() {
             <div>
               <h3 style={{ fontSize: '1.2rem' }}> Matched Available Influencers</h3>
               <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-                Filtered by: State ({campaign.targetLocation?.state}), Area ({campaign.targetLocation?.area}), Category ({campaign.category})
+                Filtered by: Coverage ({campaign.isNationwide ? 'Nationwide' : campaign.targetStates?.join(', ') || campaign.targetLocation?.state || 'Any'}), Category ({campaign.category || 'All'})
               </p>
             </div>
             {selectedInfluencers.length > 0 && (
