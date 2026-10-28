@@ -804,24 +804,38 @@ textarea.form-control {
   top: 0;
   z-index: 50;
   box-shadow: var(--shadow-sm);
+  gap: var(--space-sm);
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.topbar-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 .topbar-title {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  flex-shrink: 0;
 }
 
 .hamburger {
@@ -829,10 +843,14 @@ textarea.form-control {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px;
+  padding: 8px;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   font-size: 20px;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
 }
 
 .page-content {
@@ -1783,25 +1801,73 @@ textarea.form-control {
   :root { --sidebar-width: 0px; }
 
   .sidebar {
-    transform: translateX(-100%);
-    width: 260px;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: min(84vw, 300px) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 9999 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .sidebar.open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
 
   .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 99;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(2px) !important;
+    z-index: 9998 !important;
+    animation: fadeIn 0.2s ease !important;
   }
 
   .main-content { margin-left: 0; }
 
-  .hamburger { display: flex; }
+  .hamburger { display: flex !important; }
   .mobile-nav-toggle { display: inline-flex !important; }
+
+  .topbar {
+    padding: 0 12px;
+    height: 58px;
+    gap: 6px;
+  }
+
+  .topbar-left {
+    gap: 4px;
+  }
+
+  .topbar-center {
+    justify-content: center;
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  .topbar-title {
+    font-size: clamp(14px, 3.8vw, 16px);
+    text-align: center;
+  }
+
+  .topbar-right {
+    gap: 6px;
+  }
+
+  .user-badge {
+    padding: 2px;
+  }
+
+  .user-badge-name {
+    display: none !important;
+  }
 
   .landing-nav {
     padding: 0 var(--space-md);
@@ -1814,11 +1880,46 @@ textarea.form-control {
   .auth-page { grid-template-columns: 1fr; }
   .auth-side { display: none; }
   .auth-form-side { padding: var(--space-xl) var(--space-md); }
-  .grid-2 { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-  .topbar { padding: 0 var(--space-md); }
-  .page-content { padding: var(--space-md); }
+  .grid-2 { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .grid-3 { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)) !important; gap: 12px !important; }
+  .page-content { padding: 16px 12px !important; }
   .footer-grid { grid-template-columns: 1fr; }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: clamp(1.3rem, 4.5vw, 1.6rem);
+  }
+
+  .page-header > div:last-child {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .page-header > div:last-child .btn {
+    flex: 1 1 auto;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Table responsive scrolling */
+  .table-wrapper {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .data-table th, .data-table td {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+  }
 
   /* Policy & Governance mobile adjustments */
   .policy-content {
@@ -1832,9 +1933,8 @@ textarea.form-control {
 }
 
 @media (max-width: 480px) {
-  .stats-grid { grid-template-columns: 1fr; }
   .hero-stats { gap: var(--space-xl); }
-  .role-selector { grid-template-columns: 1fr; }
+  .role-selector { grid-template-columns: 1fr !important; }
 
   .landing-nav {
     padding: 0 12px;
@@ -1851,37 +1951,105 @@ textarea.form-control {
   }
 
   .card {
-    padding: 20px 16px !important;
+    padding: 16px 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .stat-card {
+    padding: 12px 10px !important;
+  }
+
+  .stat-value {
+    font-size: 1.4rem !important;
+  }
+
+  .topbar {
+    padding: 0 8px;
+    height: 56px;
+  }
+
+  .page-content {
+    padding: 12px 8px !important;
+  }
+
+  .auth-form-side {
+    padding: 24px 14px !important;
   }
 
   .toast-container {
-    left: 12px;
-    right: 12px;
-    bottom: 16px;
-    max-width: calc(100% - 24px);
+    left: 8px;
+    right: 8px;
+    bottom: 12px;
+    max-width: calc(100% - 16px);
+  }
+
+  .modal {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px !important;
+  }
+
+  .modal-body {
+    padding: 14px 12px !important;
+  }
+
+  .modal-footer {
+    padding: 10px 12px !important;
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+
+  .modal-footer .btn {
+    width: 100% !important;
   }
 
   .policy-content {
-    margin: 24px auto !important;
-    padding: 0 12px !important;
+    margin: 20px auto !important;
+    padding: 0 10px !important;
   }
 
   .policy-content ul,
   .policy-content ol {
-    padding-left: 20px !important;
-    margin: 12px 0 18px !important;
+    padding-left: 18px !important;
+    margin: 10px 0 16px !important;
   }
 
   .policy-content ul li,
   .policy-content ol li {
-    font-size: 13.5px !important;
-    line-height: 1.7 !important;
-    margin-bottom: 10px !important;
+    font-size: 13px !important;
+    line-height: 1.65 !important;
+    margin-bottom: 8px !important;
   }
 
   .policy-content h2 {
-    font-size: 1.2rem !important;
-    line-height: 1.35 !important;
+    font-size: 1.15rem !important;
+    line-height: 1.3 !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .topbar-title {
+    font-size: 13.5px;
+  }
+
+  .hamburger {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 6px;
+  }
+
+  .notif-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .sidebar-avatar.avatar-sm {
+    width: 30px;
+    height: 30px;
+  }
+
+  .card {
+    padding: 12px 8px !important;
   }
 }
 

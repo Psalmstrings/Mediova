@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getMe, getNotifications } from '../services/api';
+import { getMe, getNotifications, switchRole as switchRoleApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -78,6 +78,19 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [token, fetchNotifications]);
 
+  const switchActiveRole = useCallback(async (targetRole) => {
+    try {
+      const { data } = await switchRoleApi({ targetRole });
+      if (data.success) {
+        saveSession(data.user, data.token);
+        return { success: true, role: data.user.role };
+      }
+      return { success: false, message: data.message };
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || 'Failed to switch role.' };
+    }
+  }, [saveSession]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -88,6 +101,7 @@ export const AuthProvider = ({ children }) => {
         unreadCount,
         saveSession,
         logout,
+        switchActiveRole,
         fetchNotifications,
         setNotifications,
         setUnreadCount,

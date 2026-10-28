@@ -95,13 +95,13 @@ export default function RegisterPage() {
       });
 
       if (res.data.requiresOnboarding) {
-        setGoogleOnboardingUser(res.data.googleUser);
+        setGoogleOnboardingUser({ ...res.data.googleUser, credential });
         setFormData((prev) => ({
           ...prev,
-          name: res.data.googleUser.name || prev.name,
-          email: res.data.googleUser.email || prev.email,
+          name: res.data.googleUser?.name || prev.name,
+          email: res.data.googleUser?.email || prev.email,
         }));
-        toast.info('Google account connected! Please complete your WhatsApp contact number and location to finish registration.');
+        toast.info('Google account connected! Please provide your WhatsApp contact number and location to finish setup.');
       } else if (res.data.token && res.data.user) {
         saveSession(res.data.user, res.data.token);
         toast.success(`Welcome to MEDIOVA, ${res.data.user.name}!`);
@@ -136,7 +136,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const res = await googleAuth({
-        credential: googleOnboardingUser.googleId, // or pass googleId/email for completion
+        credential: googleOnboardingUser.credential,
         role,
         profileData: {
           whatsappNumber: formData.whatsappNumber,

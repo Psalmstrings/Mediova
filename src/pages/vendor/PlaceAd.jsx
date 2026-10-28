@@ -469,7 +469,7 @@ export default function VendorPlaceAd() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div className="form-row" style={{ marginBottom: '16px' }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Category <span style={{ color: '#dc2626' }}>*</span></label>
                 <select
@@ -623,7 +623,7 @@ export default function VendorPlaceAd() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px', marginBottom: '24px' }}>
+            <div className="form-row" style={{ marginBottom: '24px' }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Call to Action</label>
                 <select
@@ -847,7 +847,7 @@ export default function VendorPlaceAd() {
               <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
                 Select Desired Audience Reach Package
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))', gap: '12px' }}>
                 {packages.map((pkg) => {
                   const isSelected = formData.selectedPackage === pkg._id;
                   const views = pkg.minimumViews || pkg.views || 1000;
@@ -918,7 +918,7 @@ export default function VendorPlaceAd() {
         {/* STEP 3: Review & Payment Instructions & Receipt Upload */}
         {step === 3 && (
           <form onSubmit={handleSubmitCampaign}>
-            <div className="card" style={{ padding: '32px', marginBottom: '24px' }}>
+            <div className="card" style={{ padding: 'clamp(16px, 4vw, 32px)', marginBottom: '24px' }}>
               <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', color: '#0f172a', fontWeight: '700' }}>
                 Step 3: Review Campaign &amp; Payment
               </h3>
@@ -927,11 +927,11 @@ export default function VendorPlaceAd() {
               </p>
 
               {/* Order Summary Box */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: 'clamp(12px, 3vw, 20px)', marginBottom: '24px' }}>
                 <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: '#0f172a', fontWeight: '700' }}>
                   Campaign Summary:
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '12px', fontSize: '13px' }}>
                   <div>
                     <span style={{ color: '#64748b' }}>Campaign:</span> <strong>{formData.title}</strong>
                   </div>
@@ -986,7 +986,7 @@ export default function VendorPlaceAd() {
                   {paymentSettings?.instructions || 'Please transfer the exact campaign amount to our official brokerage account below and upload your receipt screenshot for admin confirmation.'}
                 </p>
 
-                <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #bbf7d0', padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #bbf7d0', padding: 'clamp(12px, 3vw, 16px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '14px' }}>
                   <div>
                     <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Bank Name</div>
                     <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>{paymentSettings?.bankName || 'Zenith Bank'}</div>

@@ -38,6 +38,9 @@ export default function GoogleAuthButton({ onCredentialSuccess, onError, text = 
   useEffect(() => {
     if (scriptLoaded && window.google?.accounts?.id && googleBtnRef.current && clientId) {
       try {
+        const containerWidth = googleBtnRef.current?.parentElement?.clientWidth || window.innerWidth - 48;
+        const btnWidth = Math.min(400, Math.max(220, Math.floor(containerWidth)));
+
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response) => {
@@ -56,7 +59,7 @@ export default function GoogleAuthButton({ onCredentialSuccess, onError, text = 
           text,
           shape: 'rectangular',
           logo_alignment: 'left',
-          width: 320,
+          width: btnWidth,
         });
       } catch (err) {
         console.error('Google GSI render error:', err);

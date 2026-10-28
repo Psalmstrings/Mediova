@@ -331,7 +331,7 @@ export default function VendorOrderDetail() {
                 <div style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: '600', marginBottom: '8px' }}>
                   Supporting Evidence &amp; Proof Videos:
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: '14px' }}>
                   {campaign.completedWork.evidenceUrls.map((ev, idx) => {
                     const resolvedEvUrl = resolveMediaUrl(ev.url);
                     const isVid = ev.mediaType === 'video' || resolvedEvUrl.endsWith('.mp4') || resolvedEvUrl.endsWith('.mov') || resolvedEvUrl.endsWith('.webm');
@@ -394,10 +394,10 @@ export default function VendorOrderDetail() {
       )}
 
       {/* Main Order Details Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1.8fr) 1.2fr', gap: '24px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: '24px', alignItems: 'flex-start' }}>
         
         {/* Left Column: Campaign Information */}
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card" style={{ padding: 'clamp(16px, 3.5vw, 24px)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
             <div>
               <span className="badge badge-info" style={{ marginBottom: '6px' }}>{campaign.category}</span>
@@ -522,7 +522,7 @@ export default function VendorOrderDetail() {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
               <div>
                 <span style={{ color: '#64748b', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Target Location</span>
                 <div style={{ fontWeight: '600', color: '#0f172a', marginTop: '2px' }}>{targetLocationDisplay}</div>
@@ -533,7 +533,7 @@ export default function VendorOrderDetail() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
               <div>
                 <span style={{ color: '#64748b', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Campaign Duration</span>
                 <div style={{ fontWeight: '600', color: '#0f172a', marginTop: '2px' }}>{campaign.duration}</div>
@@ -551,7 +551,7 @@ export default function VendorOrderDetail() {
         {/* Right Column: Payment & Receipt Status */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Payment Card */}
-          <div className="card" style={{ padding: '24px' }}>
+          <div className="card" style={{ padding: 'clamp(16px, 3.5vw, 24px)' }}>
             <h3 style={{ fontSize: '1.15rem', margin: '0 0 14px', color: '#0f172a' }}>Payment Status</h3>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>

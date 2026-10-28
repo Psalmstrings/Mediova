@@ -215,7 +215,7 @@ export default function InfluencerGigDetail() {
       {/* Main Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
         {/* Campaign Task Details Card */}
-        <div className="card" style={{ padding: '28px' }}>
+        <div className="card" style={{ padding: 'clamp(16px, 3.5vw, 28px)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
             <div>
               <span className="badge badge-info" style={{ marginBottom: '8px', display: 'inline-block' }}>
@@ -229,7 +229,7 @@ export default function InfluencerGigDetail() {
               </div>
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ textAlign: 'left' }}>
               <div style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase' }}>Payout Reward</div>
               <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#059669' }}>
                 ₦{Number(gig.reward).toLocaleString()}
@@ -241,7 +241,7 @@ export default function InfluencerGigDetail() {
           </div>
 
           {/* Campaign Ad Media & Copy */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) 2fr', gap: '24px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px', marginBottom: '24px' }}>
             {camp?.media?.url && (
               <div>
                 <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>

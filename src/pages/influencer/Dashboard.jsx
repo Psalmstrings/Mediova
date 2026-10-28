@@ -125,29 +125,29 @@ export default function InfluencerDashboard() {
             background: isRejected ? '#fef2f2' : isUnderReview ? '#eff6ff' : '#fffbeb',
             border: isRejected ? '1px solid #fecaca' : isUnderReview ? '1px solid #bfdbfe' : '1px solid #fef3c7',
             borderRadius: '12px',
-            padding: '18px 22px',
-            marginBottom: '24px',
+            padding: '16px 20px',
+            marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '16px',
+            gap: '14px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', maxWidth: '640px' }}>
-            <span style={{ fontSize: '24px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: '240px' }}>
+            <span style={{ fontSize: '24px', flexShrink: 0, marginTop: '2px' }}>
               {isRejected ? '⚠️' : isUnderReview ? '⏳' : '📹'}
             </span>
-            <div>
-              <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: isRejected ? '#991b1b' : isUnderReview ? '#1e40af' : '#92400e', fontWeight: '700' }}>
+            <div style={{ minWidth: 0 }}>
+              <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: isRejected ? '#991b1b' : isUnderReview ? '#1e40af' : '#92400e', fontWeight: '700', lineHeight: 1.3 }}>
                 {isRejected
                   ? 'Account Verification Required: Correction Needed'
                   : isUnderReview
                   ? 'Verification Status: Pending Approval'
                   : 'Your account is pending verification. Complete the verification process to become eligible for gigs.'}
               </h4>
-              <p style={{ margin: 0, fontSize: '13px', color: isRejected ? '#b91c1c' : isUnderReview ? '#2563eb' : '#b45309', lineHeight: '1.5' }}>
+              <p style={{ margin: 0, fontSize: '13px', color: isRejected ? '#b91c1c' : isUnderReview ? '#2563eb' : '#b45309', lineHeight: '1.5', overflowWrap: 'break-word' }}>
                 {isRejected
                   ? `Your verification submission was not approved: ${verificationSubmission?.rejectionReason || 'Video did not meet criteria'}. Please record and submit a corrected video.`
                   : isUnderReview
@@ -162,7 +162,7 @@ export default function InfluencerDashboard() {
             className="btn btn-primary"
             onClick={() => setIsVerificationModalOpen(true)}
             style={{
-              padding: '10px 20px',
+              padding: '10px 18px',
               fontSize: '13px',
               fontWeight: '600',
               borderRadius: '8px',
@@ -171,6 +171,7 @@ export default function InfluencerDashboard() {
               color: '#ffffff',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             {isRejected ? 'Resubmit Verification' : isUnderReview ? 'View Verification Details' : 'Complete Verification'}
@@ -179,40 +180,40 @@ export default function InfluencerDashboard() {
       )}
 
       {/* Top Banner with Profile & Availability */}
-      <div className="card" style={{ padding: '24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.4rem', margin: 0, color: '#0f172a', fontWeight: '700' }}>
+      <div className="card" style={{ padding: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ minWidth: '220px', flex: 1 }}>
+          <h2 style={{ fontSize: 'clamp(1.15rem, 3.5vw, 1.4rem)', margin: 0, color: '#0f172a', fontWeight: '700', lineHeight: 1.3 }}>
             Hello, {profile?.userId?.name}! 
           </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', fontSize: '13px', color: '#64748b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 12px', marginTop: '8px', fontSize: '13px', color: '#64748b' }}>
             <span>📍 {profile?.area || 'General'}, {profile?.state || profile?.userId?.location?.region || 'Global'} ({profile?.userId?.country || 'Nigeria'})</span>
-            <span>•</span>
             <span>
               {isVerified ? (
-                <span className="badge badge-success" style={{ padding: '4px 10px', fontSize: '12px' }}>
-                  ✓ Verified &amp; Gig-Eligible ({Number(profile?.verifiedViews || 0).toLocaleString()} views)
+                <span className="badge badge-success" style={{ padding: '3px 8px', fontSize: '11.5px' }}>
+                  ✓ Verified ({Number(profile?.verifiedViews || 0).toLocaleString()} views)
                 </span>
               ) : isUnderReview ? (
-                <span className="badge badge-warning" style={{ padding: '4px 10px', fontSize: '12px' }}>
+                <span className="badge badge-warning" style={{ padding: '3px 8px', fontSize: '11.5px' }}>
                   ⏳ Pending Approval
                 </span>
               ) : (
-                <span className="badge badge-secondary" style={{ padding: '4px 10px', fontSize: '12px' }}>
-                  Unverified (Pending Video Submission)
+                <span className="badge badge-secondary" style={{ padding: '3px 8px', fontSize: '11.5px' }}>
+                  Unverified (Pending Video)
                 </span>
               )}
             </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '600', color: profile?.availability ? '#059669' : '#dc2626' }}>
-            {profile?.availability ? '● Available for Gigs' : '○ Currently Unavailable'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12.5px', fontWeight: '600', color: profile?.availability ? '#059669' : '#dc2626', whiteSpace: 'nowrap' }}>
+            {profile?.availability ? '● Available' : '○ Unavailable'}
           </span>
           <button
+            type="button"
             onClick={handleToggleAvailability}
             className={`btn btn-sm ${profile?.availability ? 'btn-ghost' : 'btn-primary'}`}
-            style={{ borderRadius: '6px' }}
+            style={{ borderRadius: '6px', fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap' }}
           >
             {profile?.availability ? 'Set Unavailable' : 'Set Available'}
           </button>
