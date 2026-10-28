@@ -6,92 +6,228 @@ export default function ComplaintsPolicyPage() {
   return (
     <div>
       <PublicNav />
-      <div style={{ background: '#0f172a', color: 'white', padding: '60px 24px', textAlign: 'center' }}>
-        <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '8px' }}>Complaints & Appeals Policy</h1>
-        <p style={{ color: '#94a3b8' }}>
-          Fair, structured, and auditable dispute resolution for advertisers and creators
-        </p>
-        <div style={{ marginTop: '12px', fontSize: '13px', color: '#cbd5e1' }}>
-          Effective Date: 21 October 2026 &bull; Version 2.0
+      {/* Header Banner */}
+      <div className="policy-banner">
+        <div className="policy-banner-container">
+          <span className="policy-banner-badge">
+            Platform Governance &amp; Compliance
+          </span>
+          <h1 className="policy-banner-title">
+            Complaints &amp; Appeals Policy
+          </h1>
+          <p className="policy-banner-subtitle">
+            Fair, Structured, and Auditable Dispute Resolution for Advertisers and Creators
+          </p>
+          <div className="policy-banner-meta">
+            Effective Date: 21 October 2026 &bull; Version 2.0 &bull; Operational Resolution Framework
+          </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: '850px', margin: '60px auto', padding: '0 24px', lineHeight: '1.8', color: '#334155' }}>
+      {/* Governance Quick Links Bar */}
+      <div className="governance-nav-bar">
+        <div className="governance-nav-inner">
+          <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginRight: '6px', whiteSpace: 'nowrap' }}>
+            Governance:
+          </span>
+          <Link to="/contact" className="btn btn-sm btn-ghost" style={{ fontSize: '12px', whiteSpace: 'nowrap', borderRadius: '20px' }}>
+            Contact &amp; Support
+          </Link>
+          <Link to="/faq" className="btn btn-sm btn-ghost" style={{ fontSize: '12px', whiteSpace: 'nowrap', borderRadius: '20px' }}>
+            Help &amp; FAQs
+          </Link>
+          <Link to="/terms" className="btn btn-sm btn-ghost" style={{ fontSize: '12px', whiteSpace: 'nowrap', borderRadius: '20px' }}>
+            Terms &amp; Confidentiality
+          </Link>
+          <Link to="/privacy" className="btn btn-sm btn-ghost" style={{ fontSize: '12px', whiteSpace: 'nowrap', borderRadius: '20px' }}>
+            Privacy Policy
+          </Link>
+          <Link to="/refund-policy" className="btn btn-sm btn-ghost" style={{ fontSize: '12px', whiteSpace: 'nowrap', borderRadius: '20px' }}>
+            Refund Policy
+          </Link>
+          <Link to="/complaints-policy" className="btn btn-sm btn-primary" style={{ fontSize: '12px', whiteSpace: 'nowrap', borderRadius: '20px' }}>
+            Complaints &amp; Appeals
+          </Link>
+        </div>
+      </div>
+
+      {/* Document Body */}
+      <div className="policy-content" style={{ maxWidth: '850px', margin: '50px auto', padding: '0 24px', lineHeight: '1.85', color: '#334155' }}>
         
-        <div className="alert alert-info" style={{ marginBottom: '32px', fontSize: '13px' }}>
-          ℹ️ <strong>Resolution Commitment:</strong> MEDIOVA is committed to transparent operational mediation. All formal complaints generate a tracked reference number and are investigated according to strict timelines.
+        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '16px 20px', marginBottom: '36px', fontSize: '13px', lineHeight: '1.6' }}>
+          <strong style={{ color: '#1e40af' }}>ℹ️ Operational Resolution Commitment:</strong> MEDIOVA is committed to transparent, prompt, and auditable operational mediation. Every formal grievance automatically receives a tracked case reference number and is investigated by an independent dispute resolution officer in adherence to published service level agreements.
         </div>
 
-        <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>1. Scope & Eligible Complainants</h2>
-        <p style={{ marginBottom: '24px' }}>
-          This Complaints and Appeals Policy applies to all registered Vendors (Advertisers) and Influencers (Creators) utilizing MEDIOVA. Any user who has experienced a service failure, financial discrepancy, proof verification dispute, or misconduct is entitled to submit a formal grievance without fear of retaliatory action.
+        {/* Section 1 */}
+        <h2 style={{ marginBottom: '14px', color: '#0f172a', fontSize: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          1. Scope &amp; Eligible Complainants
+        </h2>
+        <p style={{ marginBottom: '16px' }}>
+          This Complaints and Appeals Policy protects all registered ecosystem participants:
         </p>
-
-        <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>2. Accepted Dispute Categories</h2>
-        <p style={{ marginBottom: '12px' }}>
-          Formal complaints may be lodged regarding any of the following operational matters:
-        </p>
-        <ul style={{ paddingLeft: '24px', marginBottom: '24px' }}>
-          <li><strong>Advertising Request & Submission Issues:</strong> Technical failures preventing campaign order creation or delays in initial brokerage review.</li>
-          <li><strong>Campaign Delivery & Reach Shortfalls:</strong> Disputes where verified views delivered by assigned creators fail to meet the guaranteed minimum reach package.</li>
-          <li><strong>Gig Completion & Proof Rejection:</strong> Influencer appeals against administrative rejection of legitimate WhatsApp Status screenshots.</li>
-          <li><strong>Delayed or Failed Payouts:</strong> Inquiries regarding approved gig earnings that have not landed in the creator's bank account within the 24-48 business hour SLA.</li>
-          <li><strong>Refund Review Disagreements:</strong> Escalations where an advertiser's cancellation or refund request was declined.</li>
-          <li><strong>Account Verification & Restrictions:</strong> Appeals regarding metric downgrades, view requirement disputes, or account status suspensions.</li>
-          <li><strong>Misconduct & Campaign Misuse:</strong> Premature status deletion, unauthorized modifications of promotional copy, or breach of confidentiality covenants.</li>
-          <li><strong>Data Protection & Privacy Grievances:</strong> Inquiries regarding personal data handling under the Nigeria Data Protection Act 2023.</li>
-        </ul>
-
-        <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>3. How to Submit a Formal Complaint</h2>
-        <p style={{ marginBottom: '12px' }}>
-          To ensure timely resolution and auditable recordkeeping, users should lodge complaints through the following verified channels:
-        </p>
-        <ul style={{ paddingLeft: '24px', marginBottom: '24px' }}>
+        <ul style={{ marginBottom: '28px' }}>
           <li>
-            <strong>In-Dashboard Complaints Portal:</strong> Navigate to your Account Dashboard and select <strong>"File Complaint / Appeal"</strong>. Enter your category, reference order or gig number, detailed description, and preferred contact method.
+            <strong>Eligible Complainants:</strong> Registered Advertisers ("Vendors"), WhatsApp Creators ("Influencers"), and corporate business partners actively transacting on MEDIOVA.
           </li>
           <li>
-            <strong>Official Support Desk:</strong> Submit a structured inquiry via our <Link to="/contact" style={{ color: '#059669', fontWeight: '700' }}>Contact & Support Page</Link>.
+            <strong>Non-Retaliation Guarantee:</strong> Users who file good-faith complaints or appeal administrative decisions will never experience adverse account penalties, gig blacklisting, or discriminatory matching.
           </li>
           <li>
-            <strong>Disputes Email:</strong> Send an email detailing the incident and relevant references to <a href="mailto:support@mediova.ng" style={{ color: '#059669', fontWeight: '700' }}>support@mediova.ng</a>.
+            <strong>Independent Neutrality:</strong> Dispute officers act as neutral ombudsmen between advertisers and creators to maintain platform marketplace integrity and fairness.
           </li>
         </ul>
 
-        <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>4. Expected Timelines & Response SLAs</h2>
-        <p style={{ marginBottom: '12px' }}>
-          We hold our mediation team to realistic, reliable response benchmarks:
+        {/* Section 2 */}
+        <h2 style={{ marginBottom: '14px', color: '#0f172a', fontSize: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          2. Accepted Dispute Categories
+        </h2>
+        <p style={{ marginBottom: '16px' }}>
+          Formal complaints may be submitted regarding any of the following operational scenarios:
         </p>
-        <ul style={{ paddingLeft: '24px', marginBottom: '24px' }}>
-          <li><strong>Electronic Acknowledgment:</strong> Immediate issuance of a unique reference number (e.g. <code>CMP-XXXX</code>) upon ticket creation.</li>
-          <li><strong>Initial Review & Evidence Gathering:</strong> Within <strong>24 to 48 business hours</strong>, a dispute officer will review server logs, screenshots, and transaction history.</li>
-          <li><strong>Formal Investigation Determination:</strong> A conclusive written resolution will be communicated within <strong>3 to 5 business days</strong> of submission.</li>
+        <ul style={{ marginBottom: '28px' }}>
+          <li>
+            <strong>Campaign Delivery &amp; Reach Shortfalls:</strong> Where the verified views generated by assigned creators fall short of the guaranteed package tier ordered by the advertiser.
+          </li>
+          <li>
+            <strong>Gig Completion &amp; Video Proof Rejection:</strong> Influencer appeals disputing administrative rejection of legitimate WhatsApp Status screen-recording proofs.
+          </li>
+          <li>
+            <strong>Delayed or Failed Bank Disbursements:</strong> Inquiries where approved wallet withdrawals have not cleared into the creator's Nigerian bank account within the 24–48 business hour SLA.
+          </li>
+          <li>
+            <strong>Refund &amp; Cancellation Decisions:</strong> Escalations where an advertiser’s cancellation or refund request was declined or incorrectly calculated.
+          </li>
+          <li>
+            <strong>Account Verification &amp; Metric Disputes:</strong> Disagreements regarding audience tier classifications, view count downgrades, or temporary account restrictions.
+          </li>
+          <li>
+            <strong>Advertiser Content Quality &amp; Misconduct:</strong> Creator reports of advertiser materials containing misleading claims, broken URLs, or prohibited content.
+          </li>
+          <li>
+            <strong>Creator Premature Deletion &amp; Misconduct:</strong> Advertiser reports of status deletions, privacy filtering, or muting before the full 24-hour broadcast cycle finishes.
+          </li>
+          <li>
+            <strong>Data Protection &amp; Privacy Infringements:</strong> Allegations of unauthorized contact attempts, identity disclosure, or data processing violations under NDPA 2023.
+          </li>
         </ul>
 
-        <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>5. Investigation Protocol & Confidentiality</h2>
-        <p style={{ marginBottom: '24px' }}>
-          Investigations are conducted objectively. Dispute officers examine cryptographic timestamps, uploaded proof images, WhatsApp broadcast logs, and bank statement records. Internal investigative notes are kept confidential to protect the integrity of the mediation process and prevent retaliatory disputes.
+        {/* Section 3 */}
+        <h2 style={{ marginBottom: '14px', color: '#0f172a', fontSize: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          3. How to Submit a Formal Complaint
+        </h2>
+        <p style={{ marginBottom: '16px' }}>
+          To ensure auditable tracking and expedited resolution, complaints must be submitted via one of our official intake channels:
         </p>
+        <ul style={{ marginBottom: '28px' }}>
+          <li>
+            <strong>In-Dashboard Support Desk:</strong> Log into your account and open the Support section. Provide your campaign reference (e.g., <code>AD-XXXX</code>) or gig ID (e.g., <code>GIG-XXXX</code>) and attach all relevant screenshots or video clips.
+          </li>
+          <li>
+            <strong>Interactive Public Support Form:</strong> Visit the <Link to="/contact" style={{ color: '#059669', fontWeight: '700' }}>Contact &amp; Support Page</Link> to generate an official support ticket directly.
+          </li>
+          <li>
+            <strong>Dedicated Disputes Mailbox:</strong> Email <a href="mailto:support@mediova.ng" style={{ color: '#059669', fontWeight: '700' }}>support@mediova.ng</a> with the subject line <em>"FORMAL COMPLAINT: [Your Reference Number]"</em> and detailed chronological facts.
+          </li>
+        </ul>
 
-        <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>6. Administrative Appeals Process</h2>
-        <p style={{ marginBottom: '24px' }}>
-          If you disagree with the resolution determination, you have the right to request a secondary appeal within <strong>seven (7) days</strong> of receiving the decision. Appeals must introduce new relevant evidence (such as supplemental bank statements, uncut screen recordings, or WhatsApp message exports) and are escalated to the Senior Marketplace Ombudsman. Ombudsman determinations represent the final internal resolution of MEDIOVA.
+        {/* Section 4 */}
+        <h2 style={{ marginBottom: '14px', color: '#0f172a', fontSize: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          4. Resolution Timelines &amp; Response SLAs
+        </h2>
+        <p style={{ marginBottom: '16px' }}>
+          Our dispute resolution desk operates under strict response benchmarks:
         </p>
+        <ul style={{ marginBottom: '28px' }}>
+          <li>
+            <strong>Immediate Case Tracking (Instant):</strong> Every submitted ticket generates an automated case reference code (e.g., <code>CMP-2026-XXXX</code>) for real-time tracking.
+          </li>
+          <li>
+            <strong>Initial Review &amp; Evidence Gathering (24–48 Business Hours):</strong> A dispute specialist reviews audit trails, server timestamps, screen recordings, and payment gateway logs.
+          </li>
+          <li>
+            <strong>Conclusive Written Determination (3–5 Business Days):</strong> Both parties receive a written report detailing the investigative findings, factual evidence, and corrective remedy.
+          </li>
+          <li>
+            <strong>Remedy Execution (24 Business Hours):</strong> Financial corrections (such as refund releases, creator payout credits, or fee adjustments) are disbursed within 24 business hours of the determination.
+          </li>
+        </ul>
 
-        <h2 style={{ marginBottom: '16px', color: '#0f172a' }}>7. External Regulatory Recourse</h2>
-        <p style={{ marginBottom: '32px' }}>
-          Nothing in this policy prevents users from seeking legitimate external regulatory remedies under Nigerian law, including lodging consumer protection inquiries with the Federal Competition and Consumer Protection Commission (FCCPC) or data privacy complaints with the Nigeria Data Protection Commission (NDPC).
+        {/* Section 5 */}
+        <h2 style={{ marginBottom: '14px', color: '#0f172a', fontSize: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          5. Investigation Protocols &amp; Evidence Standards
+        </h2>
+        <p style={{ marginBottom: '16px' }}>
+          All investigations adhere to strict evidentiary guidelines:
         </p>
+        <ul style={{ marginBottom: '28px' }}>
+          <li>
+            <strong>Cryptographic Timestamp Verification:</strong> File creation metadata and server ingestion timestamps are verified to confirm when screen recordings were captured.
+          </li>
+          <li>
+            <strong>Multi-Angle Review:</strong> In audience view disputes, dispute officers cross-reference advertiser referral link analytics against creator status submission proofs.
+          </li>
+          <li>
+            <strong>Banking Reconciliation:</strong> For disbursement issues, Nigerian Inter-Bank Settlement System (NIBSS) session IDs and settlement logs are reviewed with our banking partners.
+          </li>
+          <li>
+            <strong>Strict Confidentiality:</strong> Submissions, internal deliberations, and investigator notes are confidential to prevent bias or retaliatory behavior.
+          </li>
+        </ul>
 
+        {/* Section 6 */}
+        <h2 style={{ marginBottom: '14px', color: '#0f172a', fontSize: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          6. Administrative Appeals &amp; Ombudsman Escalation
+        </h2>
+        <p style={{ marginBottom: '16px' }}>
+          If a party believes the initial dispute determination was made in error or failed to consider critical facts:
+        </p>
+        <ul style={{ marginBottom: '28px' }}>
+          <li>
+            <strong>7-Day Appeal Window:</strong> An appeal must be lodged within seven (7) calendar days of the initial determination notice.
+          </li>
+          <li>
+            <strong>New Evidence Threshold:</strong> Appeals must supply additional verifiable facts or documentation (such as unedited screen recordings, bank session certificates, or communication transcripts).
+          </li>
+          <li>
+            <strong>Ombudsman Review:</strong> The case is escalated to the Senior Marketplace Ombudsman, who conducts an independent de-novo review.
+          </li>
+          <li>
+            <strong>Binding Internal Finality:</strong> The Ombudsman’s decision constitutes the final internal administrative resolution of MEDIOVA.
+          </li>
+        </ul>
+
+        {/* Section 7 */}
+        <h2 style={{ marginBottom: '14px', color: '#0f172a', fontSize: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
+          7. External Statutory Recourse
+        </h2>
+        <p style={{ marginBottom: '16px' }}>
+          Nothing in this policy limits the statutory rights of consumers or businesses under Nigerian law:
+        </p>
+        <ul style={{ marginBottom: '28px' }}>
+          <li>
+            <strong>Federal Competition &amp; Consumer Protection Commission (FCCPC):</strong> Commercial advertisers and consumers may submit consumer rights inquiries directly to the FCCPC.
+          </li>
+          <li>
+            <strong>Nigeria Data Protection Commission (NDPC):</strong> Inquiries concerning data protection or statutory privacy rights under the NDPA 2023 may be escalated to the NDPC.
+          </li>
+          <li>
+            <strong>Lagos Multi-Door Courthouse (LMDC):</strong> Commercial disputes that remain unresolved following internal escalation may be referred to professional mediation before the LMDC.
+          </li>
+        </ul>
+
+        {/* Bottom Cross-Links */}
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '24px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
           <Link to="/contact" style={{ color: '#059669', fontWeight: '700' }}>
-            Contact Customer Support →
+            Contact Support Desk →
           </Link>
           <Link to="/refund-policy" style={{ color: '#059669', fontWeight: '700' }}>
             Refund Policy →
           </Link>
           <Link to="/terms" style={{ color: '#059669', fontWeight: '700' }}>
-            Terms of Service & Confidentiality →
+            Terms &amp; Confidentiality →
+          </Link>
+          <Link to="/faq" style={{ color: '#059669', fontWeight: '700' }}>
+            Help &amp; FAQs →
           </Link>
         </div>
       </div>

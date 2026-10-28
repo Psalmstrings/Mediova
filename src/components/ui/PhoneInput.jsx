@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { COUNTRY_CALLING_CODES, normalizePhoneNumber, isValidPhoneNumber } from '../../config/locations';
+import { COUNTRIES, normalizePhoneNumber, isValidPhoneNumber } from '../../config/locations';
 
 export default function PhoneInput({
-  label = 'Phone Number',
+  label = 'WhatsApp Phone Number',
   required = false,
   value = '',
   onChange,
-  name = 'phone',
-  placeholder = '08012345678',
-  hint = '',
+  name = 'whatsappNumber',
+  placeholder = '8012345678',
+  hint = 'Enter your active WhatsApp number including international calling code.',
+  defaultCountryCode = 'NG',
 }) {
-  const [callingCode, setCallingCode] = useState('+234');
+  const initialCountry = COUNTRIES.find((c) => c.code === defaultCountryCode) || COUNTRIES.find((c) => c.code === 'NG');
+  const [callingCode, setCallingCode] = useState(initialCountry?.callingCode || '+234');
   const [localNumber, setLocalNumber] = useState('');
+
+  // Sync internal state when defaultCountryCode changes externally
+  useEffect(() => {
+    if (defaultCountryCode) {
+      const match = COUNTRIES.find((c) => c.code === defaultCountryCode);
+      if (match && !value) {
+        setCallingCode(match.callingCode);
+      }
+    }
+  }, [defaultCountryCode]);
 
   // Sync internal state when external value changes
   useEffect(() => {
@@ -20,14 +32,26 @@ export default function PhoneInput({
       return;
     }
     // Check if value already starts with one of our calling codes
-    const matched = COUNTRY_CALLING_CODES.find((c) => value.startsWith(c.code));
+    const matched = COUNTRIES.find((c) => value.startsWith(c.callingCode));
     if (matched) {
-      setCallingCode(matched.code);
-      setLocalNumber(value.slice(matched.code.length));
+      setCallingCode(matched.callingCode);
+      setLocalNumber(value.slice(matched.callingCode.length).replace(/^[0]/, ''));
     } else if (value.startsWith('+')) {
-      setLocalNumber(value);
+      // Find longest matching prefix
+      let longest = '';
+      for (const c of COUNTRIES) {
+        if (value.startsWith(c.callingCode) && c.callingCode.length > longest.length) {
+          longest = c.callingCode;
+        }
+      }
+      if (longest) {
+        setCallingCode(longest);
+        setLocalNumber(value.slice(longest.length).replace(/^[0]/, ''));
+      } else {
+        setLocalNumber(value);
+      }
     } else {
-      setLocalNumber(value);
+      setLocalNumber(value.replace(/^[0]/, ''));
     }
   }, [value]);
 
@@ -46,7 +70,7 @@ export default function PhoneInput({
   };
 
   const handleNumberChange = (e) => {
-    const raw = e.target.value;
+    const raw = e.target.value.replace(/[^0-9]/g, '');
     setLocalNumber(raw);
     const normalized = normalizePhoneNumber(raw, callingCode);
     onChange({
@@ -65,7 +89,7 @@ export default function PhoneInput({
   return (
     <div className="form-group phone-input-component">
       <label className="form-label" htmlFor={`phone-input-${name}`}>
-        {label} {required && <span className="required">*</span>}
+        {label} {required && <span className="required" style={{ color: '#dc2626' }}>*</span>}
       </label>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <select
@@ -73,18 +97,20 @@ export default function PhoneInput({
           onChange={handleCodeChange}
           className="form-control"
           style={{
-            width: '130px',
+            width: '140px',
             flexShrink: 0,
             background: '#f8fafc',
             fontWeight: '600',
             fontSize: '13px',
             cursor: 'pointer',
+            height: '44px',
+            borderRadius: '8px',
           }}
           aria-label="Country Calling Code"
         >
-          {COUNTRY_CALLING_CODES.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.flag} {c.code}
+          {COUNTRIES.map((c) => (
+            <option key={`${c.code}-${c.callingCode}`} value={c.callingCode}>
+              {c.flag} {c.name} ({c.callingCode})
             </option>
           ))}
         </select>
@@ -97,12 +123,12 @@ export default function PhoneInput({
           placeholder={placeholder}
           value={localNumber}
           onChange={handleNumberChange}
-          style={{ flex: 1 }}
+          style={{ flex: 1, height: '44px', borderRadius: '8px' }}
         />
       </div>
       {localNumber && (
         <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-          Standard E.164 format: <strong style={{ color: isValid ? '#059669' : '#dc2626' }}>{normalizedVal}</strong>
+          Standard E.164: <strong style={{ color: isValid ? '#059669' : '#dc2626' }}>{normalizedVal}</strong>
         </div>
       )}
       {!isValid && localNumber && (
@@ -110,7 +136,7 @@ export default function PhoneInput({
           Please enter a valid phone number (8-14 digits)
         </span>
       )}
-      {hint && <span className="form-hint">{hint}</span>}
+      {hint && <span className="form-hint" style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', display: 'block' }}>{hint}</span>}
     </div>
   );
 }

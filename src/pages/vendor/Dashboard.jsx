@@ -71,11 +71,11 @@ export default function VendorDashboard() {
             {profile?.businessName || 'My Business'}
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '14px', margin: 0 }}>
-            Reach targeted Nigerian customers through verified WhatsApp Status creators.
+            Reach targeted Global customers through verified WhatsApp Status creators.
           </p>
         </div>
         <Link to="/vendor/advertise" className="btn btn-lg" style={{ background: 'var(--brand-yellow)', color: '#0F172A', fontWeight: '800' }}>
-          Place an Advertisement &rarr;
+          Place an Advert &rarr;
         </Link>
       </div>
 
@@ -117,7 +117,7 @@ export default function VendorDashboard() {
       {/* Recent Campaigns Table */}
       <div className="card">
         <div className="card-header">
-          <h3 style={{ fontSize: '1.15rem' }}>Recent Advertising Orders</h3>
+          <h3 style={{ fontSize: '1.15rem' }}>Recent Advert Orders</h3>
           <Link to="/vendor/orders" className="btn btn-sm btn-ghost">View All Orders</Link>
         </div>
         <div className="card-body" style={{ padding: 0 }}>
@@ -127,7 +127,7 @@ export default function VendorDashboard() {
               <h3>No campaigns placed yet</h3>
               <p>Launch your first WhatsApp Status advertising blitz to reach targeted local buyers.</p>
               <Link to="/vendor/place-ad" className="btn btn-primary" style={{ background: '#2563eb' }}>
-                Place an Advertisement Now
+                Place an Advert Now
               </Link>
             </div>
           ) : (

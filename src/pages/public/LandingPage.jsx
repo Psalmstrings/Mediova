@@ -17,11 +17,11 @@ const faqs = [
   },
   {
     q: 'Can any WhatsApp user become an influencer?',
-    a: 'Anyone with an engaged audience and regular viewers across Nigeria can apply. We welcome micro-influencers with 100+ active status viewers up to major creators.',
+    a: 'Anyone with an engaged audience and regular status viewers can apply. We welcome verified creators across global regions and territories with 100+ active status viewers up to major creators.',
   },
   {
-    q: 'Which Nigerian locations are supported?',
-    a: 'We distribute hyper-local advertising across Lagos, Abuja, Port Harcourt, Ibadan, Enugu, Kano, and dozens of tertiary institution campuses nationwide.',
+    q: 'Which geographic locations and regions are supported?',
+    a: 'We distribute hyper-targeted advertising across multiple countries and regions worldwide, with deep local targeting across cities, states, provinces, counties, and campuses.',
   },
 ];
 
@@ -39,35 +39,132 @@ const categories = [
 const PublicNav = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dashMap = { admin: '/admin/dashboard', influencer: '/influencer/dashboard', vendor: '/vendor/dashboard' };
 
   return (
-    <nav className="landing-nav">
-      <Link to="/" className="sidebar-brand" style={{ textDecoration: 'none' }}>
-        <span className="brand-dot"></span>
-        <span className="brand-name" style={{ color: 'var(--brand-dark)' }}>
-          MEDIOVA
-        </span>
-      </Link>
-      <div className="nav-links">
-        <Link to="/how-it-works" className="nav-link">How It Works</Link>
-        <Link to="/for-influencers" className="nav-link">For Influencers</Link>
-        <Link to="/for-vendors" className="nav-link">For Businesses</Link>
-        <Link to="/faq" className="nav-link">FAQ</Link>
-      </div>
-      <div className="nav-actions">
-        {user ? (
-          <button className="btn btn-primary" onClick={() => navigate(dashMap[user.role] || '/')}>
-            Go to Dashboard
+    <>
+      <nav className="landing-nav">
+        <Link to="/" className="sidebar-brand" style={{ textDecoration: 'none' }}>
+          <span className="brand-dot"></span>
+          <span className="brand-name" style={{ color: 'var(--brand-dark)' }}>
+            MEDIOVA
+          </span>
+        </Link>
+        <div className="nav-links">
+          <Link to="/how-it-works" className="nav-link">How It Works</Link>
+          <Link to="/for-influencers" className="nav-link">For Influencers</Link>
+          <Link to="/for-vendors" className="nav-link">For Businesses</Link>
+          <Link to="/faq" className="nav-link">FAQ</Link>
+          <Link to="/contact" className="nav-link">Contact</Link>
+        </div>
+        <div className="nav-actions">
+          {user ? (
+            <button className="btn btn-primary btn-sm" onClick={() => navigate(dashMap[user.role] || '/')}>
+              Dashboard
+            </button>
+          ) : (
+            <>
+              <Link to="/login" className="btn btn-ghost btn-sm">Sign In</Link>
+              <Link to="/register" className="btn btn-primary btn-sm">Get Started</Link>
+            </>
+          )}
+          <button
+            type="button"
+            className="mobile-nav-toggle"
+            aria-label="Toggle navigation menu"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              display: 'none',
+              background: 'transparent',
+              border: 'none',
+              fontSize: '22px',
+              cursor: 'pointer',
+              padding: '4px 6px',
+              color: '#0f172a',
+            }}
+          >
+            {mobileMenuOpen ? '✕' : '☰'}
           </button>
-        ) : (
-          <>
-            <Link to="/login" className="btn btn-ghost">Sign In</Link>
-            <Link to="/register" className="btn btn-primary">Get Started</Link>
-          </>
-        )}
-      </div>
-    </nav>
+        </div>
+      </nav>
+
+      {mobileMenuOpen && (
+        <div
+          className="mobile-nav-drawer"
+          style={{
+            position: 'fixed',
+            top: '60px',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.97)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 999,
+            padding: '24px 20px',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+          }}
+        >
+          <Link
+            to="/how-it-works"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: 'white', fontSize: '15px', fontWeight: '600', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            How It Works →
+          </Link>
+          <Link
+            to="/for-influencers"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: 'white', fontSize: '15px', fontWeight: '600', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            For Influencers →
+          </Link>
+          <Link
+            to="/for-vendors"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: 'white', fontSize: '15px', fontWeight: '600', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            For Businesses &amp; Advertisers →
+          </Link>
+          <Link
+            to="/faq"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: 'white', fontSize: '15px', fontWeight: '600', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            Help &amp; FAQs →
+          </Link>
+          <Link
+            to="/contact"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: 'white', fontSize: '15px', fontWeight: '600', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            Contact &amp; Support →
+          </Link>
+          <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '16px' }}>
+            <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '700' }}>
+              Governance Policies
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+              <Link to="/terms" onClick={() => setMobileMenuOpen(false)} style={{ color: '#10b981', fontSize: '14px' }}>
+                &bull; Terms &amp; Confidentiality
+              </Link>
+              <Link to="/privacy" onClick={() => setMobileMenuOpen(false)} style={{ color: '#10b981', fontSize: '14px' }}>
+                &bull; Privacy Policy (NDPA 2023)
+              </Link>
+              <Link to="/refund-policy" onClick={() => setMobileMenuOpen(false)} style={{ color: '#10b981', fontSize: '14px' }}>
+                &bull; Refund &amp; Cancellation Policy
+              </Link>
+              <Link to="/complaints-policy" onClick={() => setMobileMenuOpen(false)} style={{ color: '#10b981', fontSize: '14px' }}>
+                &bull; Complaints &amp; Appeals
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -82,7 +179,7 @@ const Footer = () => (
           </span>
         </div>
         <p className="footer-tagline">
-          Nigeria's premier WhatsApp Status advertising brokerage. Connecting ambitious brands with trusted local creators.
+          The global WhatsApp Status advertising brokerage. Connecting ambitious brands with verified creators worldwide.
         </p>
       </div>
       <div className="footer-col">
@@ -99,7 +196,7 @@ const Footer = () => (
           <Link to="/contact" className="footer-link">Contact & Support</Link>
           <Link to="/faq" className="footer-link">Help & FAQs</Link>
           <Link to="/terms" className="footer-link">Terms & Confidentiality</Link>
-          <Link to="/privacy" className="footer-link">Privacy Policy (NDPA)</Link>
+          <Link to="/privacy" className="footer-link">Privacy Policy</Link>
           <Link to="/refund-policy" className="footer-link">Refund Policy</Link>
           <Link to="/complaints-policy" className="footer-link">Complaints & Appeals</Link>
         </div>
@@ -107,8 +204,8 @@ const Footer = () => (
       <div className="footer-col">
         <h4>Coverage</h4>
         <div className="footer-links">
-          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>Lagos &bull; Abuja &bull; PH &bull; Nationwide</span>
-          <span style={{ fontSize: '13px', color: 'var(--brand-yellow)', marginTop: '8px' }}>Verified Nigerian Creator Network</span>
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>120+ Supported Countries &bull; Multi-Country Targeting</span>
+          <span style={{ fontSize: '13px', color: 'var(--brand-yellow)', marginTop: '8px' }}>Verified Global Creator Network</span>
         </div>
       </div>
     </div>
@@ -149,7 +246,7 @@ export default function LandingPage() {
             fontWeight: '700',
             marginBottom: '24px'
           }}>
-            WhatsApp Status Creator Network &bull; Nigeria
+            Global WhatsApp Status Creator Network
           </div>
 
           <h1 style={{
@@ -171,7 +268,7 @@ export default function LandingPage() {
             margin: '0 auto 36px',
             lineHeight: '1.6'
           }}>
-            MEDIOVA is the managed advertising bridge between high-growth Nigerian businesses and verified WhatsApp Status influencers.
+            MEDIOVA is the managed global advertising platform connecting commercial advertisers with verified WhatsApp Status creators worldwide.
           </p>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -358,7 +455,7 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: '640px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: '900', color: '#FFFFFF', marginBottom: '14px' }}>
-            Ready to Join Nigeria's Leading WhatsApp Ad Network?
+            Ready to Join the Leading Global WhatsApp Ad Network?
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px', marginBottom: '32px' }}>
             Sign up in minutes. Accounts are verified within 24 hours.

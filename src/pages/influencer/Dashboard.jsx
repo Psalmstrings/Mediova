@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { getInfluencerProfile, getMyGigs, getMyEarnings, updateAvailability } from '../../services/api';
+import { getInfluencerProfile, getMyGigs, getMyEarnings, updateAvailability, getVerificationStatus } from '../../services/api';
 import { toast } from '../../components/ui/Toast';
+import InfluencerVerificationModal from '../../components/influencer/InfluencerVerificationModal';
 
 export default function InfluencerDashboard() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [verificationSubmission, setVerificationSubmission] = useState(null);
+  const [verificationStatus, setVerificationStatus] = useState('pending');
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [submissionSuccessBanner, setSubmissionSuccessBanner] = useState(false);
   const [gigs, setGigs] = useState([]);
   const [earnings, setEarnings] = useState({ totalEarned: 0, pendingEarnings: 0, availableBalance: 0, paidEarnings: 0 });
 
@@ -17,14 +22,17 @@ export default function InfluencerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [pRes, gRes, eRes] = await Promise.all([
+      const [pRes, gRes, eRes, vRes] = await Promise.all([
         getInfluencerProfile(),
         getMyGigs(),
         getMyEarnings(),
+        getVerificationStatus().catch(() => ({ data: {} })),
       ]);
       setProfile(pRes.data.profile);
       setGigs(gRes.data.gigs || []);
       setEarnings(eRes.data.summary || {});
+      setVerificationSubmission(vRes.data.submission || pRes.data.verificationSubmission || null);
+      setVerificationStatus(vRes.data.status || pRes.data.profile?.verificationStatus || 'pending');
     } catch (err) {
       toast.error('Failed to load dashboard data.');
     } finally {
@@ -40,6 +48,14 @@ export default function InfluencerDashboard() {
     } catch (err) {
       toast.error('Could not update availability.');
     }
+  };
+
+  const handleVerificationSuccess = (newSubmission) => {
+    setVerificationSubmission(newSubmission);
+    setVerificationStatus('under_review');
+    setSubmissionSuccessBanner(true);
+    setIsVerificationModalOpen(false);
+    fetchDashboardData();
   };
 
   if (loading) {
@@ -58,41 +74,132 @@ export default function InfluencerDashboard() {
   const completedGigs = gigs.filter((g) => g.status === 'approved');
   const pendingReviewGigs = gigs.filter((g) => g.status === 'submitted');
 
-  const isVerified = profile?.verificationStatus === 'verified';
+  const isVerified = verificationStatus === 'verified' || profile?.verificationStatus === 'verified';
+  const isUnderReview = verificationStatus === 'under_review' || (!isVerified && verificationSubmission?.status === 'under_review');
+  const isRejected = verificationStatus === 'rejected' || profile?.verificationStatus === 'rejected';
 
   return (
     <DashboardLayout title="Influencer Dashboard" role="influencer">
-      {/* Verification Notice */}
-      {!isVerified && (
-        <div className="alert alert-warning" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <strong>Status: Reach Verification {profile?.verificationStatus === 'rejected' ? 'Rejected' : 'Pending'}</strong>
-            <p style={{ margin: 0, fontSize: '13px' }}>
-              {profile?.verificationStatus === 'rejected'
-                ? 'Your reach screenshots did not meet requirements. Please re-upload updated proof.'
-                : 'Upload proof screenshots of your WhatsApp Status views so our broker team can verify your reach and assign paying gigs.'}
-            </p>
+      {/* Verification Submission Success Banner */}
+      {submissionSuccessBanner && (
+        <div
+          style={{
+            background: '#ecfdf5',
+            border: '1px solid #a7f3d0',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '26px' }}>🎉</span>
+            <div>
+              <strong style={{ color: '#065f46', fontSize: '15px', display: 'block' }}>
+                Verification Video Submitted Successfully!
+              </strong>
+              <div style={{ color: '#047857', fontSize: '13px', marginTop: '2px' }}>
+                Your video has been uploaded and queued. Your Verification Status is now <strong>Pending Approval</strong> by our administrative brokerage team.
+              </div>
+            </div>
           </div>
-          <Link to="/influencer/profile" className="btn btn-sm btn-warning">
-            Upload Proof
-          </Link>
+          <button
+            type="button"
+            className="btn btn-sm btn-ghost"
+            style={{ color: '#065f46', fontWeight: 'bold', fontSize: '16px', padding: '4px 8px' }}
+            onClick={() => setSubmissionSuccessBanner(false)}
+          >
+            ✕
+          </button>
         </div>
       )}
 
-      {/* Top Banner with Availability Toggle */}
+      {/* 8.1 Mandatory Influencer Verification Banner */}
+      {!isVerified && (
+        <div
+          style={{
+            background: isRejected ? '#fef2f2' : isUnderReview ? '#eff6ff' : '#fffbeb',
+            border: isRejected ? '1px solid #fecaca' : isUnderReview ? '1px solid #bfdbfe' : '1px solid #fef3c7',
+            borderRadius: '12px',
+            padding: '18px 22px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', maxWidth: '640px' }}>
+            <span style={{ fontSize: '24px', flexShrink: 0 }}>
+              {isRejected ? '⚠️' : isUnderReview ? '⏳' : '📹'}
+            </span>
+            <div>
+              <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: isRejected ? '#991b1b' : isUnderReview ? '#1e40af' : '#92400e', fontWeight: '700' }}>
+                {isRejected
+                  ? 'Account Verification Required: Correction Needed'
+                  : isUnderReview
+                  ? 'Verification Status: Pending Approval'
+                  : 'Your account is pending verification. Complete the verification process to become eligible for gigs.'}
+              </h4>
+              <p style={{ margin: 0, fontSize: '13px', color: isRejected ? '#b91c1c' : isUnderReview ? '#2563eb' : '#b45309', lineHeight: '1.5' }}>
+                {isRejected
+                  ? `Your verification submission was not approved: ${verificationSubmission?.rejectionReason || 'Video did not meet criteria'}. Please record and submit a corrected video.`
+                  : isUnderReview
+                  ? 'Your verification video has been submitted and is currently pending administrator review. Once verified, you will be automatically eligible for paid advertising gigs.'
+                  : 'Submit a quick screen recording of your active WhatsApp status view metrics. Only approved, verified accounts are eligible for paid gig assignments.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setIsVerificationModalOpen(true)}
+            style={{
+              padding: '10px 20px',
+              fontSize: '13px',
+              fontWeight: '600',
+              borderRadius: '8px',
+              background: isRejected ? '#dc2626' : isUnderReview ? '#2563eb' : '#059669',
+              border: 'none',
+              color: '#ffffff',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isRejected ? 'Resubmit Verification' : isUnderReview ? 'View Verification Details' : 'Complete Verification'}
+          </button>
+        </div>
+      )}
+
+      {/* Top Banner with Profile & Availability */}
       <div className="card" style={{ padding: '24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', margin: 0 }}>
+          <h2 style={{ fontSize: '1.4rem', margin: 0, color: '#0f172a', fontWeight: '700' }}>
             Hello, {profile?.userId?.name}! 
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', fontSize: '13px', color: '#64748b' }}>
-            <span> {profile?.area}, {profile?.state}</span>
+            <span>📍 {profile?.area || 'General'}, {profile?.state || profile?.userId?.location?.region || 'Global'} ({profile?.userId?.country || 'Nigeria'})</span>
             <span>•</span>
             <span>
               {isVerified ? (
-                <span className="badge badge-success">✓ Verified Reach: {Number(profile?.verifiedViews).toLocaleString()} views</span>
+                <span className="badge badge-success" style={{ padding: '4px 10px', fontSize: '12px' }}>
+                  ✓ Verified &amp; Gig-Eligible ({Number(profile?.verifiedViews || 0).toLocaleString()} views)
+                </span>
+              ) : isUnderReview ? (
+                <span className="badge badge-warning" style={{ padding: '4px 10px', fontSize: '12px' }}>
+                  ⏳ Pending Approval
+                </span>
               ) : (
-                <span className="badge badge-warning">Unverified: {Number(profile?.averageViews).toLocaleString()} submitted views</span>
+                <span className="badge badge-secondary" style={{ padding: '4px 10px', fontSize: '12px' }}>
+                  Unverified (Pending Video Submission)
+                </span>
               )}
             </span>
           </div>
@@ -105,18 +212,19 @@ export default function InfluencerDashboard() {
           <button
             onClick={handleToggleAvailability}
             className={`btn btn-sm ${profile?.availability ? 'btn-ghost' : 'btn-primary'}`}
+            style={{ borderRadius: '6px' }}
           >
             {profile?.availability ? 'Set Unavailable' : 'Set Available'}
           </button>
         </div>
       </div>
 
-      {/* Dashboard Stats Cards */}
-      <div className="stats-grid">
+      {/* Stats Cards */}
+      <div className="stats-grid" style={{ marginBottom: '28px' }}>
         <div className="stat-card">
           <div className="stat-info">
             <div className="stat-label">Available Gigs</div>
-            <div className="stat-value" style={{ color: 'var(--brand-yellow-dark)' }}>{newGigs.length}</div>
+            <div className="stat-value" style={{ color: '#059669' }}>{newGigs.length}</div>
             <div className="stat-sub">Ready to accept</div>
           </div>
         </div>
@@ -124,150 +232,101 @@ export default function InfluencerDashboard() {
         <div className="stat-card">
           <div className="stat-info">
             <div className="stat-label">Active Gigs</div>
-            <div className="stat-value" style={{ color: 'var(--brand-green)' }}>{activeGigs.length}</div>
-            <div className="stat-sub">Posting in progress</div>
+            <div className="stat-value" style={{ color: '#2563eb' }}>{activeGigs.length}</div>
+            <div className="stat-sub">In progress</div>
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-info">
-            <div className="stat-label">Pending Review</div>
-            <div className="stat-value" style={{ color: 'var(--warning)' }}>{pendingReviewGigs.length}</div>
-            <div className="stat-sub">Proof submitted</div>
+            <div className="stat-label">Under Review</div>
+            <div className="stat-value" style={{ color: '#d97706' }}>{pendingReviewGigs.length}</div>
+            <div className="stat-sub">Evidence submitted</div>
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-info">
-            <div className="stat-label">Available Balance</div>
-            <div className="stat-value">₦{Number(earnings.availableBalance).toLocaleString()}</div>
-            <div className="stat-sub">Approved for withdrawal</div>
+            <div className="stat-label">Completed Gigs</div>
+            <div className="stat-value" style={{ color: '#16a34a' }}>{completedGigs.length}</div>
+            <div className="stat-sub">Paid out</div>
           </div>
         </div>
       </div>
 
-      {/* Secondary Stats */}
-      <div className="grid-3" style={{ gap: '16px', marginBottom: '32px' }}>
-        <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '3px solid var(--brand-green)' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Total Earned to Date</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--brand-green)', marginTop: '4px' }}>
-            ₦{Number(earnings.totalEarned).toLocaleString()}
-          </div>
+      {/* Active/New Gigs Section */}
+      <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: '700' }}>
+            Recent Assigned Gigs
+          </h3>
+          <Link to="/influencer/gigs" style={{ color: '#059669', fontSize: '13px', fontWeight: '600' }}>
+            View All Gigs &rarr;
+          </Link>
         </div>
-        <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '3px solid var(--brand-yellow)' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Pending Earnings</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--brand-yellow-dark)', marginTop: '4px' }}>
-            ₦{Number(earnings.pendingEarnings).toLocaleString()}
-          </div>
-        </div>
-        <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '3px solid #0284C7' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Completed Gigs</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0284C7', marginTop: '4px' }}>
-            {completedGigs.length}
-          </div>
-        </div>
-      </div>
 
-      {/* New Assigned Gigs Section */}
-      <div className="card" style={{ marginBottom: '32px' }}>
-        <div className="card-header">
-          <h3 style={{ fontSize: '1.15rem' }}> New Gigs Assigned to You</h3>
-          <Link to="/influencer/gigs" className="btn btn-sm btn-ghost">View All ({gigs.length})</Link>
-        </div>
-        <div className="card-body">
-          {newGigs.length === 0 ? (
-            <div className="empty-state" style={{ padding: '30px 20px' }}>
-              
-              <h3>No new gigs assigned right now</h3>
-              <p>Keep your status available and verified. You'll receive instant alerts when a campaign matches your location!</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {newGigs.map((gig) => (
-                <div
-                  key={gig._id}
-                  style={{
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '10px',
-                    padding: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '12px',
-                    background: '#f8fafc',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="badge badge-info">#{gig.gigNumber}</span>
-                      <strong style={{ fontSize: '15px' }}>{gig.campaignId?.title}</strong>
-                      <span className="badge badge-muted">{gig.campaignId?.category}</span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-                       Target: {gig.campaignId?.targetLocation?.area}, {gig.campaignId?.targetLocation?.state} • Target Views: {Number(gig.assignedViews).toLocaleString()}
-                    </div>
+        {gigs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
+            <div style={{ fontSize: '36px', marginBottom: '8px' }}>📋</div>
+            <p style={{ margin: 0, fontSize: '14px' }}>No gigs assigned yet.</p>
+            {!isVerified && (
+              <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#b45309' }}>
+                Complete your account verification video to become eligible for campaign assignments.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {gigs.slice(0, 5).map((gig) => (
+              <div
+                key={gig._id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '14px 18px',
+                  borderRadius: '10px',
+                  border: '1px solid #f1f5f9',
+                  background: '#f8fafc',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: '600', fontSize: '14px', color: '#0f172a' }}>
+                    {gig.campaignId?.title || `Gig #${gig.gigNumber}`}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>Reward</div>
-                      <div style={{ fontSize: '18px', fontWeight: '800', color: '#059669' }}>
-                        ₦{Number(gig.reward).toLocaleString()}
-                      </div>
-                    </div>
-                    <Link to={`/influencer/gigs/${gig._id}`} className="btn btn-sm btn-primary">
-                      Review & Accept →
-                    </Link>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    Target: {Number(gig.assignedViews).toLocaleString()} WhatsApp Views &bull; Reward: ₦{Number(gig.reward).toLocaleString()}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Active Posting Section */}
-      <div className="card">
-        <div className="card-header">
-          <h3 style={{ fontSize: '1.15rem' }}> Active Campaigns (Submit Proof)</h3>
-        </div>
-        <div className="card-body">
-          {activeGigs.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '24px' }}>
-              No active gigs in progress.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {activeGigs.map((gig) => (
-                <div
-                  key={gig._id}
-                  style={{
-                    border: '1px solid #a7f3d0',
-                    background: '#ecfdf5',
-                    borderRadius: '10px',
-                    padding: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '12px',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: '700', color: '#064e3b' }}>{gig.campaignId?.title}</div>
-                    <div style={{ fontSize: '13px', color: '#047857' }}>
-                      Status: Accepted • Required Status Views: {Number(gig.assignedViews).toLocaleString()}
-                    </div>
-                  </div>
-                  <Link to={`/influencer/gigs/${gig._id}`} className="btn btn-sm btn-success">
-                    Submit Screenshots & Proof →
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span className={`badge badge-${gig.status === 'approved' ? 'success' : gig.status === 'submitted' ? 'warning' : 'info'}`}>
+                    {gig.status}
+                  </span>
+                  <Link
+                    to={`/influencer/gigs/${gig._id}`}
+                    className="btn btn-sm btn-ghost"
+                    style={{ fontSize: '12px', padding: '6px 12px' }}
+                  >
+                    View Details
                   </Link>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Verification Modal Component */}
+      <InfluencerVerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        verificationSubmission={verificationSubmission}
+        verificationStatus={verificationStatus}
+        onSuccess={handleVerificationSuccess}
+      />
     </DashboardLayout>
   );
 }

@@ -24,17 +24,17 @@ export default function ForVendors() {
       <div style={{ maxWidth: '1100px', margin: '60px auto', padding: '0 24px' }}>
         <div className="grid-3" style={{ gap: '24px', marginBottom: '60px' }}>
           <div className="card" style={{ padding: '24px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '12px' }}></div>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Hyper-Local Targeting</h3>
+            <div style={{ fontSize: '36px', marginBottom: '12px' }}>🎯</div>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Global & Local Targeting</h3>
             <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>
-              Target customers in Lekki, Ikeja, Surulere, Abuja Garki, Port Harcourt Rumuola, or specific local government areas.
+              Target audiences across 120+ countries, with deep administrative division targeting by region, state, province, county, or local area.
             </p>
           </div>
           <div className="card" style={{ padding: '24px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '12px' }}></div>
+            <div style={{ fontSize: '36px', marginBottom: '12px' }}>📈</div>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Guaranteed Verified Views</h3>
             <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>
-              Packages starting from 1,000 views to 50,000+ views. Every view count is verified through audited screenshot submissions.
+              Packages starting from 1,000 views to 50,000+ views. Every view count is verified through audited screen-recording video submissions.
             </p>
           </div>
           <div className="card" style={{ padding: '24px' }}>

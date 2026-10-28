@@ -17,6 +17,10 @@ export default function AdminSettings() {
     bankName: '',
     accountName: '',
     accountNumber: '',
+    currency: 'NGN',
+    sortCode: '',
+    swiftBic: '',
+    maxCampaignAreas: 15,
     minInfluencerViews: 500,
   });
 
@@ -40,6 +44,10 @@ export default function AdminSettings() {
         bankName: s.bankDetails?.bankName || 'Zenith Bank',
         accountName: s.bankDetails?.accountName || 'MEDIOVA Media Brokerage Ltd',
         accountNumber: s.bankDetails?.accountNumber || '1012345678',
+        currency: s.bankDetails?.currency || 'NGN',
+        sortCode: s.bankDetails?.sortCode || '',
+        swiftBic: s.bankDetails?.swiftBic || '',
+        maxCampaignAreas: s.maxCampaignAreas !== undefined ? s.maxCampaignAreas : 15,
         minInfluencerViews: s.minInfluencerViews || 500,
       });
     } catch (err) {
@@ -65,7 +73,11 @@ export default function AdminSettings() {
           bankName: settings.bankName,
           accountName: settings.accountName,
           accountNumber: settings.accountNumber,
+          currency: settings.currency,
+          sortCode: settings.sortCode,
+          swiftBic: settings.swiftBic,
         },
+        maxCampaignAreas: Number(settings.maxCampaignAreas),
         minInfluencerViews: Number(settings.minInfluencerViews),
       };
 
@@ -172,6 +184,34 @@ export default function AdminSettings() {
               <span className="form-hint">Use {'{ORDER_NUMBER}'} and {'{TITLE}'} placeholders.</span>
             </div>
 
+            <h4 style={{ margin: '24px 0 16px' }}>Campaign & Influencer Rules</h4>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Maximum Campaign Local Areas</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  className="form-control"
+                  value={settings.maxCampaignAreas}
+                  onChange={(e) => setSettings({ ...settings, maxCampaignAreas: e.target.value })}
+                />
+                <span className="form-hint">Cap on the number of local areas/districts a vendor can select per targeted advert.</span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Minimum Influencer Views Required</label>
+                <input
+                  type="number"
+                  min="100"
+                  className="form-control"
+                  value={settings.minInfluencerViews}
+                  onChange={(e) => setSettings({ ...settings, minInfluencerViews: e.target.value })}
+                />
+                <span className="form-hint">Minimum audited WhatsApp views threshold for influencer verification.</span>
+              </div>
+            </div>
+
             <h4 style={{ margin: '24px 0 16px' }}>Bank Transfer Payment Instructions</h4>
 
             <div className="form-group">
@@ -195,7 +235,7 @@ export default function AdminSettings() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Account Number</label>
+                <label className="form-label">Account Number / IBAN</label>
                 <input
                   type="text"
                   className="form-control"
@@ -205,14 +245,53 @@ export default function AdminSettings() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Account Name</label>
-              <input
-                type="text"
-                className="form-control"
-                value={settings.accountName}
-                onChange={(e) => setSettings({ ...settings, accountName: e.target.value })}
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Account Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={settings.accountName}
+                  onChange={(e) => setSettings({ ...settings, accountName: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Payment Currency</label>
+                <select
+                  className="form-control"
+                  value={settings.currency}
+                  onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
+                >
+                  <option value="NGN">NGN (Nigerian Naira - ₦)</option>
+                  <option value="USD">USD (US Dollar - $)</option>
+                  <option value="GBP">GBP (British Pound - £)</option>
+                  <option value="EUR">EUR (Euro - €)</option>
+                  <option value="KES">KES (Kenyan Shilling - Ksh)</option>
+                  <option value="GHS">GHS (Ghanaian Cedi - GH₵)</option>
+                  <option value="ZAR">ZAR (South African Rand - R)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Sort Code / Routing Number (Optional)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={settings.sortCode}
+                  onChange={(e) => setSettings({ ...settings, sortCode: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">SWIFT / BIC Code (Optional for International Transfers)</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={settings.swiftBic}
+                  onChange={(e) => setSettings({ ...settings, swiftBic: e.target.value })}
+                />
+              </div>
             </div>
 
             <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={saving} style={{ marginTop: '24px' }}>

@@ -3,7 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { getOrderOptions, createCampaign } from '../../services/api';
 import { toast } from '../../components/ui/Toast';
-import { NIGERIAN_STATES, STATE_LGAS } from '../../config/locations';
+import CountrySelect from '../../components/ui/CountrySelect';
+import {
+  COUNTRIES,
+  getCountryMeta,
+  getRegionsForCountry,
+  getLgasForState,
+} from '../../config/locations';
 
 const ctaOptions = ['WhatsApp', 'Call', 'Website', 'Visit Store', 'Buy Now', 'Learn More', 'Send Message'];
 
@@ -18,43 +24,43 @@ export default function VendorPlaceAd() {
   const [objectives, setObjectives] = useState([]);
   const [packages, setPackages] = useState([]);
   const [durations, setDurations] = useState(['24 Hours', '48 Hours', '3 Days', '7 Days']);
+  const [paymentSettings, setPaymentSettings] = useState(null);
+  const [maxCampaignAreas, setMaxCampaignAreas] = useState(15);
 
-  // Success / Payment Confirmation Modal
+  // Success / Confirmation State
   const [orderSuccess, setOrderSuccess] = useState(null);
 
   // Form Fields
   const [formData, setFormData] = useState({
-    // Step 1
     title: '',
     description: '',
-    // Step 2
     category: '',
-    // Step 3
     objective: 'Brand Awareness',
-    // Step 4
     adCopy: '',
     actionType: 'WhatsApp',
     targetValue: '',
+    mediaFiles: [],
+    mediaPreviews: [],
     mediaFile: null,
     mediaPreview: null,
-    // Step 5: Multi-state targeting
-    targetStates: ['Lagos'],
+    // Global Location Targeting
+    targetCountry: 'Nigeria',
+    targetCountryCode: 'NG',
+    targetRegion: 'Lagos',
+    targetAreas: ['Ikeja (Alausa/GRA)', 'Lagos Island'],
+    customAreaInput: '',
     isNationwide: false,
-    state: 'Lagos',
-    city: 'Lagos',
-    lga: '',
-    area: 'General',
-    targetRadius: 'Statewide',
-    // Step 6
+    // Package & Reach
     selectedPackage: null,
     requiredViews: 1000,
     price: 5000,
-    // Step 7
+    currency: 'NGN',
     duration: '24 Hours',
     instructions: '',
+    // Payment Receipt
+    receiptFile: null,
+    receiptPreview: null,
   });
-
-  const [stateSearch, setStateSearch] = useState('');
 
   useEffect(() => {
     fetchOptions();
@@ -64,96 +70,216 @@ export default function VendorPlaceAd() {
     try {
       setLoadingOptions(true);
       const { data } = await getOrderOptions();
-      setCategories(data.categories || []);
-      setObjectives(data.objectives || []);
-      setPackages(data.packages || []);
-      if (data.durations && data.durations.length > 0) setDurations(data.durations);
+      const cats = data.categories || [];
+      const pkgs = data.packages || [];
+      const objs = data.objectives || [];
+      setCategories(cats);
+      setPackages(pkgs);
+      if (objs.length > 0) setObjectives(objs);
+      if (data.durations?.length > 0) setDurations(data.durations);
+      if (data.paymentSettings) setPaymentSettings(data.paymentSettings);
+      if (data.maxCampaignAreas) setMaxCampaignAreas(data.maxCampaignAreas);
 
-      if (data.categories?.length > 0) {
-        setFormData((prev) => ({ ...prev, category: data.categories[0].name }));
-      }
-      if (data.objectives?.length > 0) {
-        setFormData((prev) => ({ ...prev, objective: data.objectives[0].name }));
-      }
-      if (data.packages?.length > 0) {
+      if (cats.length > 0) {
         setFormData((prev) => ({
           ...prev,
-          selectedPackage: data.packages[0]._id,
-          requiredViews: data.packages[0].minimumViews,
-          price: data.packages[0].price,
+          category: prev.category || cats[0].name,
+        }));
+      }
+      if (objs.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          objective: prev.objective || objs[0].name,
+        }));
+      }
+      if (pkgs.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          selectedPackage: prev.selectedPackage || pkgs[0]._id,
+          requiredViews: prev.requiredViews || pkgs[0].minimumViews || pkgs[0].views || 1000,
+          price: prev.price || pkgs[0].price || 5000,
+          currency: data.paymentSettings?.currency || 'NGN',
         }));
       }
     } catch (err) {
-      toast.error('Failed to load order configuration.');
+      toast.error('Failed to load campaign setup options.');
     } finally {
       setLoadingOptions(false);
     }
   };
 
-  const handleMediaChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({
-        ...formData,
-        mediaFile: file,
-        mediaPreview: URL.createObjectURL(file),
-      });
-    }
+  const handleCountryChange = (e) => {
+    const newCountry = e.target.value;
+    const countryMeta = getCountryMeta(newCountry);
+    const availableRegions = getRegionsForCountry(newCountry);
+    const initialRegion = availableRegions[0] || '';
+    const availableAreas = getLgasForState(initialRegion);
+
+    setFormData((prev) => ({
+      ...prev,
+      targetCountry: newCountry,
+      targetCountryCode: countryMeta?.code || 'NG',
+      targetRegion: initialRegion,
+      targetAreas: availableAreas.length > 0 ? [availableAreas[0]] : [],
+      customAreaInput: '',
+      isNationwide: false,
+    }));
   };
 
-  const handleSelectPackage = (pkg) => {
-    setFormData({
-      ...formData,
+  const handleRegionChange = (e) => {
+    const newRegion = e.target.value;
+    const availableAreas = getLgasForState(newRegion);
+    setFormData((prev) => ({
+      ...prev,
+      targetRegion: newRegion,
+      targetAreas: availableAreas.length > 0 ? [availableAreas[0]] : [],
+      customAreaInput: '',
+    }));
+  };
+
+  const handleAddArea = (areaToAdd) => {
+    if (!areaToAdd || !areaToAdd.trim()) return;
+    const clean = areaToAdd.trim();
+
+    if (formData.targetAreas.includes(clean)) {
+      toast.info(`"${clean}" is already in your target areas list.`);
+      return;
+    }
+
+    if (formData.targetAreas.length >= maxCampaignAreas) {
+      toast.warning(`You have reached the administrator-configured limit of ${maxCampaignAreas} areas per campaign.`);
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      targetAreas: [...prev.targetAreas, clean],
+      customAreaInput: '',
+    }));
+  };
+
+  const handleRemoveArea = (areaToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      targetAreas: prev.targetAreas.filter((a) => a !== areaToRemove),
+    }));
+  };
+
+  const handlePackageSelect = (pkg) => {
+    setFormData((prev) => ({
+      ...prev,
       selectedPackage: pkg._id,
-      requiredViews: pkg.minimumViews,
+      requiredViews: pkg.minimumViews || pkg.views || 1000,
       price: pkg.price,
-    });
+    }));
   };
 
-  const handleToggleState = (st) => {
-    if (formData.isNationwide) return;
-    const exists = formData.targetStates.includes(st);
-    if (exists) {
-      if (formData.targetStates.length === 1) {
-        toast.warning('At least one target state must be selected.');
-        return;
+  const handleMediaChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = [];
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" is not an image (JPEG, PNG, WEBP supported).`);
+        continue;
       }
-      setFormData({
-        ...formData,
-        targetStates: formData.targetStates.filter((s) => s !== st),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        targetStates: [...formData.targetStates, st],
-      });
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error(`"${file.name}" exceeds the 15MB file size limit.`);
+        continue;
+      }
+      validFiles.push(file);
     }
+
+    if (validFiles.length === 0) return;
+
+    const currentFiles = formData.mediaFiles || [];
+    const combinedFiles = [...currentFiles, ...validFiles].slice(0, 10);
+    const combinedPreviews = combinedFiles.map((f) => ({
+      file: f,
+      url: URL.createObjectURL(f),
+      name: f.name,
+      size: (f.size / (1024 * 1024)).toFixed(2),
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      mediaFiles: combinedFiles,
+      mediaPreviews: combinedPreviews,
+      mediaFile: combinedFiles[0] || null,
+      mediaPreview: combinedPreviews[0]?.url || null,
+    }));
   };
 
-  const handleToggleNationwide = () => {
-    const nextVal = !formData.isNationwide;
-    setFormData({
-      ...formData,
-      isNationwide: nextVal,
-      targetStates: nextVal ? ['Nationwide'] : ['Lagos'],
-      state: nextVal ? 'Nationwide' : 'Lagos',
-    });
+  const handleRemoveMedia = (indexToRemove) => {
+    const updatedFiles = (formData.mediaFiles || []).filter((_, idx) => idx !== indexToRemove);
+    const updatedPreviews = (formData.mediaPreviews || []).filter((_, idx) => idx !== indexToRemove);
+
+    setFormData((prev) => ({
+      ...prev,
+      mediaFiles: updatedFiles,
+      mediaPreviews: updatedPreviews,
+      mediaFile: updatedFiles[0] || null,
+      mediaPreview: updatedPreviews[0]?.url || null,
+    }));
   };
 
-  const handleClearAllStates = () => {
-    if (formData.isNationwide) {
-      setFormData({ ...formData, isNationwide: false, targetStates: ['Lagos'], state: 'Lagos' });
-    } else {
-      setFormData({ ...formData, targetStates: ['Lagos'], state: 'Lagos' });
+  const handleReceiptChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Payment receipt must be an image (JPEG, PNG, WEBP).');
+      return;
     }
-    toast.info('Reset target location to Lagos.');
+
+    setFormData((prev) => ({
+      ...prev,
+      receiptFile: file,
+      receiptPreview: URL.createObjectURL(file),
+    }));
   };
 
-  const handleSubmit = async (e) => {
+  // Step 1 Validation
+  const handleNextStep1 = () => {
+    if (!formData.title.trim()) {
+      toast.warning('Please enter a campaign name/title.');
+      return;
+    }
+    if (!formData.description.trim()) {
+      toast.warning('Please enter a brief campaign description.');
+      return;
+    }
+    if (!formData.category) {
+      toast.warning('Please choose a category.');
+      return;
+    }
+    if ((!formData.mediaFiles || formData.mediaFiles.length === 0) && !formData.mediaFile) {
+      toast.warning('Please upload at least one advert flyer/image.');
+      return;
+    }
+    setStep(2);
+  };
+
+  // Step 2 Validation
+  const handleNextStep2 = () => {
+    if (!formData.isNationwide && formData.targetAreas.length === 0) {
+      toast.warning('Please select at least one target area or choose Nationwide coverage.');
+      return;
+    }
+    if (!formData.isNationwide && formData.targetAreas.length > maxCampaignAreas) {
+      toast.warning(`Cannot exceed maximum allowed ${maxCampaignAreas} areas.`);
+      return;
+    }
+    setStep(3);
+  };
+
+  // Final Submission
+  const handleSubmitCampaign = async (e) => {
     e.preventDefault();
     if (submitting) return;
-    setSubmitting(true);
 
+    setSubmitting(true);
     try {
       const dataPayload = new FormData();
       dataPayload.append('title', formData.title.trim());
@@ -168,25 +294,31 @@ export default function VendorPlaceAd() {
       };
       dataPayload.append('callToAction', JSON.stringify(ctaData));
 
-      const locationData = {
-        state: formData.isNationwide ? 'Nationwide' : (formData.targetStates[0] || 'Lagos'),
-        targetStates: formData.isNationwide ? ['Nationwide'] : formData.targetStates,
-        isNationwide: Boolean(formData.isNationwide),
-        city: formData.city || '',
-        lga: formData.lga || '',
-        area: formData.area || 'General',
-        businessAddress: '',
-      };
-      dataPayload.append('targetLocation', JSON.stringify(locationData));
-      dataPayload.append('targetRadius', formData.targetRadius || 'Statewide');
+      // Global targeting fields
+      dataPayload.append('targetCountry', formData.targetCountry);
+      dataPayload.append('targetCountryCode', formData.targetCountryCode);
+      dataPayload.append('targetRegion', formData.targetRegion);
+      dataPayload.append('targetAreas', JSON.stringify(formData.targetAreas));
+      dataPayload.append('isNationwide', String(Boolean(formData.isNationwide)));
+
       dataPayload.append('reachPackageId', formData.selectedPackage || '');
-      dataPayload.append('requiredViews', formData.requiredViews);
-      dataPayload.append('price', formData.price);
+      dataPayload.append('requiredViews', String(formData.requiredViews));
+      dataPayload.append('price', String(formData.price));
+      dataPayload.append('currency', formData.currency);
       dataPayload.append('duration', formData.duration);
       dataPayload.append('instructions', formData.instructions || '');
 
-      if (formData.mediaFile) {
+      if (formData.mediaFiles && formData.mediaFiles.length > 0) {
+        formData.mediaFiles.forEach((f) => {
+          dataPayload.append('media', f);
+          dataPayload.append('mediaFiles', f);
+        });
+      } else if (formData.mediaFile) {
         dataPayload.append('media', formData.mediaFile);
+      }
+
+      if (formData.receiptFile) {
+        dataPayload.append('receipt', formData.receiptFile);
       }
 
       const res = await createCampaign(dataPayload);
@@ -194,12 +326,11 @@ export default function VendorPlaceAd() {
         setOrderSuccess({
           orderNumber: res.data.orderNumber,
           campaign: res.data.campaign,
-          whatsappUrl: res.data.whatsappUrl,
         });
-        toast.success('Advertising order submitted successfully!');
+        toast.success('Campaign and payment details submitted successfully!');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit campaign request. Check required fields.');
+      toast.error(err.response?.data?.message || 'Failed to submit campaign. Please check your fields and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -207,7 +338,7 @@ export default function VendorPlaceAd() {
 
   if (loadingOptions) {
     return (
-      <DashboardLayout title="Place Advertisement" role="vendor">
+      <DashboardLayout title="Create Advert Campaign" role="vendor">
         <div style={{ textAlign: 'center', padding: '60px' }}>
           <div className="spinner" style={{ margin: '0 auto 16px' }} />
           <p style={{ color: '#64748b' }}>Loading campaign setup options...</p>
@@ -216,50 +347,50 @@ export default function VendorPlaceAd() {
     );
   }
 
-  // If order was successfully submitted, show the WhatsApp Payment confirmation modal
+  // Success Confirmation Screen
   if (orderSuccess) {
     return (
-      <DashboardLayout title="Order Received" role="vendor">
-        <div className="card" style={{ maxWidth: '680px', margin: '40px auto', padding: '40px', textAlign: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}></div>
+      <DashboardLayout title="Order Submitted" role="vendor">
+        <div className="card" style={{ maxWidth: '640px', margin: '30px auto', padding: '40px 32px', textAlign: 'center' }}>
+          <div style={{ fontSize: '56px', marginBottom: '16px' }}>🎉</div>
           <span className="badge badge-warning" style={{ fontSize: '13px', padding: '6px 16px' }}>
-            Awaiting Payment Confirmation
+            {formData.receiptFile ? 'Payment Submitted & Awaiting Review' : 'Order Submitted & Awaiting Payment'}
           </span>
-          <h2 style={{ fontSize: '1.75rem', marginTop: '16px', marginBottom: '8px' }}>
-            Advertising Request Received!
+          <h2 style={{ fontSize: '1.6rem', marginTop: '16px', marginBottom: '8px', color: '#0f172a' }}>
+            Campaign Order Received!
           </h2>
-          <p style={{ color: '#64748b', fontSize: '15px', lineHeight: '1.6', marginBottom: '24px' }}>
-            Your order <strong>#{orderSuccess.orderNumber}</strong> has been logged. To activate and distribute your campaign, please contact our advertising broker team on WhatsApp to confirm payment.
+          <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.6' }}>
+            Your advertising order <strong>#{orderSuccess.orderNumber}</strong> has been submitted to the MEDIOVA administration team.
+            {formData.receiptFile
+              ? ' Our finance team will verify your payment receipt shortly and activate gig assignments for verified influencers.'
+              : ' Please ensure payment is completed so our team can approve your advert and assign influencers.'}
           </p>
 
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', textAlign: 'left', marginBottom: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', margin: '24px 0', textAlign: 'left', fontSize: '13px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ color: '#64748b' }}>Campaign:</span>
-              <strong>{orderSuccess.campaign?.title}</strong>
+              <strong style={{ color: '#0f172a' }}>{formData.title}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
-              <span style={{ color: '#64748b' }}>Required Views:</span>
-              <strong style={{ color: '#2563eb' }}>{Number(orderSuccess.campaign?.requiredViews).toLocaleString()} Views</strong>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: '#64748b' }}>Target Country:</span>
+              <span>{formData.targetCountry}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: '#64748b' }}>Target Reach:</span>
+              <span>{Number(formData.requiredViews).toLocaleString()} Views</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#64748b' }}>Total Amount:</span>
-              <strong style={{ color: '#059669', fontSize: '18px' }}>₦{Number(orderSuccess.campaign?.price).toLocaleString()}</strong>
+              <strong style={{ color: '#059669', fontSize: '15px' }}>{formData.currency} {Number(formData.price).toLocaleString()}</strong>
             </div>
           </div>
 
-          <a
-            href={orderSuccess.whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-whatsapp btn-lg btn-block"
-            style={{ fontSize: '16px', padding: '16px' }}
-          >
-             Contact Admin on WhatsApp to Complete Payment →
-          </a>
-
-          <div style={{ marginTop: '20px' }}>
-            <Link to={`/vendor/orders/${orderSuccess.campaign?._id}`} className="btn btn-ghost btn-block">
-              View Order Progress Timeline
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <Link to={`/vendor/orders/${orderSuccess.campaign._id}`} className="btn btn-primary" style={{ padding: '12px 24px', fontWeight: '600' }}>
+              View Order Progress &rarr;
+            </Link>
+            <Link to="/vendor/dashboard" className="btn btn-ghost" style={{ padding: '12px 24px' }}>
+              Vendor Dashboard
             </Link>
           </div>
         </div>
@@ -267,624 +398,674 @@ export default function VendorPlaceAd() {
     );
   }
 
-  const stepsList = [
-    'Info', 'Category', 'Objective', 'Media', 'Target', 'Reach', 'Duration', 'Review',
-  ];
+  const currentRegions = getRegionsForCountry(formData.targetCountry);
+  const currentRegionLgas = getLgasForState(formData.targetRegion);
 
   return (
-    <DashboardLayout title="Place Advertisement" role="vendor">
-      <div className="page-header">
-        <div>
-          <h2 className="page-title">Place an Advertisement</h2>
-          <p className="page-subtitle">Configure your WhatsApp campaign in 8 straightforward steps.</p>
-        </div>
-      </div>
-
-      {/* Progress Steps Header */}
-      <div className="step-wizard" style={{ maxWidth: '900px', margin: '0 auto 32px' }}>
-        {stepsList.map((label, idx) => {
-          const stepNum = idx + 1;
-          const isDone = step > stepNum;
-          const isActive = step === stepNum;
-          return (
-            <div key={label} className="step-item">
-              <div className={`step-circle ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
-                {isDone ? '✓' : stepNum}
-              </div>
-              <span className={`step-label ${isActive ? 'active' : ''}`}>{label}</span>
-              {stepNum < stepsList.length && <div className={`step-line ${isDone ? 'done' : ''}`} />}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div className="card-body" style={{ padding: '32px' }}>
-          {/* STEP 1: Campaign Information */}
-          {step === 1 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 1: Campaign Information</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                Give your campaign a recognizable title and detail what you are promoting.
-              </p>
-
-              <div className="form-group">
-                <label className="form-label">Campaign / Advertisement Name <span className="required">*</span></label>
-                <input
-                  type="text"
-                  required
-                  className="form-control"
-                  placeholder="e.g. Samsung Galaxy S24 Ultra Promo"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">What are you promoting? (Description) <span className="required">*</span></label>
-                <textarea
-                  required
-                  className="form-control"
-                  rows={4}
-                  placeholder="Describe your product, service, special discount, or event in detail..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  if (!formData.title || !formData.description) {
-                    toast.warning('Please enter both a campaign name and description.');
-                    return;
-                  }
-                  setStep(2);
-                }}
-              >
-                Next: Select Category →
-              </button>
-            </div>
-          )}
-
-          {/* STEP 2: Category */}
-          {step === 2 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 2: Choose Advertising Category</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                Categories are used by the Admin broker to match your campaign with relevant influencer audiences.
-              </p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '28px' }}>
-                {categories.map((c) => {
-                  const sel = formData.category === c.name;
-                  return (
-                    <div
-                      key={c._id || c.name}
-                      onClick={() => setFormData({ ...formData, category: c.name })}
-                      style={{
-                        padding: '16px',
-                        borderRadius: '10px',
-                        border: sel ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                        background: sel ? '#eff6ff' : 'white',
-                        cursor: 'pointer',
-                        fontWeight: sel ? '700' : '500',
-                        color: sel ? '#1e40af' : '#334155',
-                        textAlign: 'center',
-                        fontSize: '14px',
-                      }}
-                    >
-                      {c.name}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(3)}>Next: Campaign Objective →</button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: Campaign Objective */}
-          {step === 3 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 3: Campaign Objective</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                What is the primary result you want to achieve with this WhatsApp campaign?
-              </p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginBottom: '28px' }}>
-                {[
-                  'Brand Awareness', 'Product Promotion', 'Generate Sales', 'Generate WhatsApp Leads',
-                  'Event Promotion', 'Website Traffic', 'Product Launch', 'Location Promotion', 'General Awareness',
-                ].map((obj) => {
-                  const sel = formData.objective === obj;
-                  return (
-                    <div
-                      key={obj}
-                      onClick={() => setFormData({ ...formData, objective: obj })}
-                      style={{
-                        padding: '16px',
-                        borderRadius: '10px',
-                        border: sel ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                        background: sel ? '#eff6ff' : 'white',
-                        cursor: 'pointer',
-                        fontWeight: sel ? '700' : '500',
-                        color: sel ? '#1e40af' : '#334155',
-                        textAlign: 'center',
-                        fontSize: '14px',
-                      }}
-                    >
-                      {obj}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setStep(2)}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(4)}>Next: Advertisement Media →</button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 4: Advertisement Media & Copy */}
-          {step === 4 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 4: Advertisement Media & Copy</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                Upload the creative flyer or video influencers will post, along with your caption.
-              </p>
-
-              <div className="form-group">
-                <label className="form-label">Upload Ad Flyer / Image / Video</label>
-                <input
-                  type="file"
-                  accept="image/*,video/mp4"
-                  className="form-control"
-                  onChange={handleMediaChange}
-                />
-                <span className="form-hint">Accepted formats: JPEG, PNG, WEBP, MP4 (Max 25MB)</span>
-              </div>
-
-              {formData.mediaPreview && (
-                <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                  <img
-                    src={formData.mediaPreview}
-                    alt="Preview"
-                    style={{ maxHeight: '240px', borderRadius: '8px', border: '1px solid #e2e8f0', margin: '0 auto' }}
-                  />
-                </div>
-              )}
-
-              <div className="form-group">
-                <label className="form-label">Advertisement Caption / Copy</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  placeholder="Text influencers should write alongside the flyer on their Status..."
-                  value={formData.adCopy}
-                  onChange={(e) => setFormData({ ...formData, adCopy: e.target.value })}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Call to Action (CTA)</label>
-                  <select
-                    className="form-control"
-                    value={formData.actionType}
-                    onChange={(e) => setFormData({ ...formData, actionType: e.target.value })}
-                  >
-                    {ctaOptions.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">CTA Target (Phone/WhatsApp/Link)</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="e.g. +2348012345678 or https://..."
-                    value={formData.targetValue}
-                    onChange={(e) => setFormData({ ...formData, targetValue: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setStep(3)}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(5)}>Next: Target Location →</button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5: Multi-State Target Location */}
-          {step === 5 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 5: Target Location & Multi-State Coverage</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px' }}>
-                Specify where your target buyers reside. You can select multiple states across Nigeria or target nationwide.
-              </p>
-
-              {/* Nationwide Toggle Card */}
+    <DashboardLayout title="Create Advertising Campaign" role="vendor">
+      <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+        {/* Progress Tracker */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+          {[
+            { num: 1, label: 'Advert Details' },
+            { num: 2, label: 'Global Targeting' },
+            { num: 3, label: 'Review & Pay' },
+          ].map((s) => (
+            <div
+              key={s.num}
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                position: 'relative',
+              }}
+            >
               <div
-                onClick={handleToggleNationwide}
                 style={{
-                  padding: '16px 20px',
-                  borderRadius: '10px',
-                  border: formData.isNationwide ? '2px solid #059669' : '1px solid #cbd5e1',
-                  background: formData.isNationwide ? '#ecfdf5' : '#f8fafc',
-                  cursor: 'pointer',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: step >= s.num ? '#059669' : '#e2e8f0',
+                  color: step >= s.num ? '#ffffff' : '#64748b',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '20px',
+                  justifyContent: 'center',
+                  fontWeight: '700',
+                  fontSize: '14px',
+                  margin: '0 auto 6px',
+                  transition: 'all 0.3s',
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: '700', color: formData.isNationwide ? '#065f46' : '#1e293b' }}>
-                    🇳🇬 Nationwide Coverage (All 36 States & FCT Abuja)
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                    Match verified influencers across all regions for maximum broad market reach.
-                  </div>
-                </div>
-                <div style={{ fontSize: '20px', fontWeight: '800', color: formData.isNationwide ? '#059669' : '#94a3b8' }}>
-                  {formData.isNationwide ? '✓ Selected' : '+ Select'}
-                </div>
+                {step > s.num ? '✓' : s.num}
               </div>
+              <span style={{ fontSize: '12px', fontWeight: step === s.num ? '700' : '500', color: step === s.num ? '#047857' : '#64748b' }}>
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
 
-              {!formData.isNationwide && (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <label className="form-label" style={{ margin: 0 }}>
-                      Target States ({formData.targetStates.length} selected) <span className="required">*</span>
-                    </label>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-ghost"
-                      onClick={handleClearAllStates}
-                      style={{ fontSize: '12px' }}
-                    >
-                      Clear Selection
-                    </button>
-                  </div>
+        {/* STEP 1: Advert Details */}
+        {step === 1 && (
+          <div className="card" style={{ padding: '32px' }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', color: '#0f172a', fontWeight: '700' }}>
+              Step 1: Campaign Content &amp; Media
+            </h3>
+            <p style={{ margin: '0 0 24px', fontSize: '13px', color: '#64748b' }}>
+              Provide the advert details and upload the flyer or promotional image for influencers to post.
+            </p>
 
-                  {/* Selected Location Chips */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-                    {formData.targetStates.map((st) => (
-                      <span
-                        key={st}
-                        style={{
-                          background: '#eff6ff',
-                          color: '#1e40af',
-                          border: '1px solid #bfdbfe',
-                          borderRadius: '20px',
-                          padding: '4px 12px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}
-                      >
-                        {st}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleState(st)}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#1e40af',
-                            cursor: 'pointer',
-                            padding: '0 2px',
-                            fontWeight: '800',
-                          }}
-                          aria-label={`Remove ${st}`}
-                        >
-                          &times;
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">
+                Campaign / Advertisement Title <span style={{ color: '#dc2626' }}>*</span>
+              </label>
+              <input
+                type="text"
+                required
+                className="form-control"
+                placeholder="e.g. Summer Fashion Sale 2026"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                style={{ height: '44px', borderRadius: '8px' }}
+              />
+            </div>
 
-                  {/* State Filter Search */}
-                  <div className="form-group" style={{ marginBottom: '12px' }}>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Search Nigerian states (e.g. Lagos, Rivers, Oyo, Kano)..."
-                      value={stateSearch}
-                      onChange={(e) => setStateSearch(e.target.value)}
-                    />
-                  </div>
-
-                  {/* State Badges Grid */}
-                  <div
-                    style={{
-                      maxHeight: '160px',
-                      overflowY: 'auto',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '6px',
-                      marginBottom: '20px',
-                      background: 'white',
-                    }}
-                  >
-                    {NIGERIAN_STATES.filter((s) =>
-                      s.toLowerCase().includes(stateSearch.toLowerCase())
-                    ).map((st) => {
-                      const isSel = formData.targetStates.includes(st);
-                      return (
-                        <button
-                          type="button"
-                          key={st}
-                          onClick={() => handleToggleState(st)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '16px',
-                            fontSize: '12px',
-                            border: isSel ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                            background: isSel ? '#eff6ff' : 'white',
-                            color: isSel ? '#1e40af' : '#475569',
-                            fontWeight: isSel ? '700' : '500',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {isSel ? `✓ ${st}` : `+ ${st}`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-
-              {/* Geographic Coverage Summary Box */}
-              <div
-                style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  fontSize: '13px',
-                  color: '#334155',
-                  marginBottom: '20px',
-                }}
-              >
-                <strong>Geographical Scope:</strong>{' '}
-                {formData.isNationwide
-                  ? 'All Nigerian States (Nationwide Distribution)'
-                  : `${formData.targetStates.length} State(s): ${formData.targetStates.join(', ')}`}
-              </div>
-
-              {/* Detailed City & Area Info */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">City / Town Focus (Optional)</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="e.g. Lagos, Ikeja, Port Harcourt, Ibadan"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Area / Focus Hub <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    required
-                    className="form-control"
-                    placeholder="e.g. Lekki, Commercial Districts, Island"
-                    value={formData.area}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Target Radius / Scope</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Category <span style={{ color: '#dc2626' }}>*</span></label>
                 <select
                   className="form-control"
-                  value={formData.targetRadius}
-                  onChange={(e) => setFormData({ ...formData, targetRadius: e.target.value })}
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  style={{ height: '44px', borderRadius: '8px' }}
                 >
-                  <option value="Statewide">Statewide / Regional</option>
-                  <option value="Metropolitan Area">Metropolitan Area</option>
-                  <option value="10km Hub">Within 10km Commercial Radius</option>
-                  <option value="5km Local">Within 5km Local Neighborhood</option>
+                  {categories.length === 0 ? (
+                    <option value="" disabled>Loading categories...</option>
+                  ) : (
+                    <>
+                      <option value="" disabled>-- Select a Category --</option>
+                      {categories.map((c) => (
+                        <option key={c._id || c.name} value={c.name}>{c.name}</option>
+                      ))}
+                    </>
+                  )}
                 </select>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setStep(4)}>← Back</button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => {
-                    if (!formData.isNationwide && formData.targetStates.length === 0) {
-                      toast.warning('Please select at least one target state or choose Nationwide.');
-                      return;
-                    }
-                    if (!formData.area.trim()) {
-                      toast.warning('Please enter a target area or neighborhood focus.');
-                      return;
-                    }
-                    setStep(6);
-                  }}
-                >
-                  Next: Required Reach →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 6: Required Reach Packages */}
-          {step === 6 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 6: Required Advertising Reach</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                Minimum advertising reach packages start at 1,000 views. Select your package:
-              </p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-                {packages.map((pkg) => {
-                  const sel = formData.selectedPackage === pkg._id;
-                  return (
-                    <div
-                      key={pkg._id}
-                      onClick={() => handleSelectPackage(pkg)}
-                      style={{
-                        padding: '20px',
-                        borderRadius: '12px',
-                        border: sel ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                        background: sel ? '#eff6ff' : 'white',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                      }}
-                    >
-                      <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', color: sel ? '#1e40af' : '#0f172a' }}>
-                        {pkg.name}
-                      </h4>
-                      <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#059669', marginBottom: '6px' }}>
-                        ₦{Number(pkg.price).toLocaleString()}
-                      </div>
-                      <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-                        {Number(pkg.minimumViews).toLocaleString()}+ Guaranteed Views
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setStep(5)}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(7)}>Next: Duration →</button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 7: Campaign Duration & Instructions */}
-          {step === 7 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 7: Campaign Duration</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                Choose how long each influencer must leave your advertisement live on Status.
-              </p>
-
-              <div className="form-group">
-                <label className="form-label">Duration</label>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Campaign Objective</label>
                 <select
                   className="form-control"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  value={formData.objective}
+                  onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
+                  style={{ height: '44px', borderRadius: '8px' }}
                 >
-                  {durations.map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                  {objectives.length > 0 ? (
+                    objectives.map((o) => (
+                      <option key={o._id || o.name} value={o.name}>{o.name}</option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Brand Awareness">Brand Awareness</option>
+                      <option value="Direct Sales / Inquiries">Direct Sales / Inquiries</option>
+                      <option value="Store / Event Traffic">Store / Event Traffic</option>
+                      <option value="App / Website Clicks">App / Website Clicks</option>
+                    </>
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">Brief Campaign Summary <span style={{ color: '#dc2626' }}>*</span></label>
+              <textarea
+                rows="2"
+                required
+                className="form-control"
+                placeholder="What is this campaign advertising?"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                style={{ borderRadius: '8px' }}
+              />
+            </div>
+
+            {/* Advert Images Upload (Supports multiple images) */}
+            <div style={{ marginBottom: '20px', padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', background: '#f8fafc' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                <label className="form-label" style={{ fontWeight: '700', margin: 0 }}>
+                  Upload Advert Flyers / Creative Images <span style={{ color: '#dc2626' }}>*</span>
+                </label>
+                {formData.mediaPreviews?.length > 0 && (
+                  <span className="badge badge-success" style={{ fontSize: '12px' }}>
+                    {formData.mediaPreviews.length} image{formData.mediaPreviews.length > 1 ? 's' : ''} attached (Max 10)
+                  </span>
+                )}
+              </div>
+
+              <input
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/webp,image/*"
+                onChange={handleMediaChange}
+                className="form-control"
+                style={{ padding: '10px' }}
+              />
+              <span className="form-hint" style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', display: 'block' }}>
+                You can select multiple images at once or add more sequentially. Supported formats: JPEG, PNG, WEBP (max 15MB each, up to 10 images).
+              </span>
+
+              {formData.mediaPreviews?.length > 0 && (
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', marginBottom: '10px' }}>
+                    Attached Images ({formData.mediaPreviews.length}):
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px' }}>
+                    {formData.mediaPreviews.map((p, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          position: 'relative',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          background: 'white',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                        }}
+                      >
+                        <img
+                          src={p.url}
+                          alt={`Advert Preview ${idx + 1}`}
+                          style={{ width: '100%', height: '100px', objectFit: 'cover', display: 'block' }}
+                        />
+                        <div style={{ padding: '6px 8px', fontSize: '11px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.name}>
+                          #{idx + 1} • {p.name}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMedia(idx)}
+                          style={{
+                            position: 'absolute',
+                            top: '4px',
+                            right: '4px',
+                            background: 'rgba(239, 68, 68, 0.9)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '22px',
+                            height: '22px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                          }}
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Caption & CTA */}
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">Ad Caption (Text for influencers to post)</label>
+              <textarea
+                rows="3"
+                className="form-control"
+                placeholder="e.g. Get 20% off all designer sneakers this weekend only! Tap link below or send WhatsApp DM..."
+                value={formData.adCopy}
+                onChange={(e) => setFormData({ ...formData, adCopy: e.target.value })}
+                style={{ borderRadius: '8px' }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px', marginBottom: '24px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Call to Action</label>
+                <select
+                  className="form-control"
+                  value={formData.actionType}
+                  onChange={(e) => setFormData({ ...formData, actionType: e.target.value })}
+                  style={{ height: '44px', borderRadius: '8px' }}
+                >
+                  {ctaOptions.map((cta) => (
+                    <option key={cta} value={cta}>{cta}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Special Instructions for Influencers (Optional)</label>
-                <textarea
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">CTA Target Link or Contact</label>
+                <input
+                  type="text"
                   className="form-control"
-                  rows={3}
-                  placeholder="e.g. Post between 8am and 10am. Tag our handle in replies."
-                  value={formData.instructions}
-                  onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                  placeholder="e.g. https://store.com or +2348012345678"
+                  value={formData.targetValue}
+                  onChange={(e) => setFormData({ ...formData, targetValue: e.target.value })}
+                  style={{ height: '44px', borderRadius: '8px' }}
                 />
               </div>
+            </div>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setStep(6)}>← Back</button>
-                <button type="button" className="btn btn-primary" onClick={() => setStep(8)}>Next: Review Order →</button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleNextStep1}
+              style={{ width: '100%', padding: '14px', fontWeight: '600', borderRadius: '8px' }}
+            >
+              Continue to Global Targeting &rarr;
+            </button>
+          </div>
+        )}
+
+        {/* STEP 2: Global Location Targeting */}
+        {step === 2 && (
+          <div className="card" style={{ padding: '32px' }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', color: '#0f172a', fontWeight: '700' }}>
+              Step 2: Global Audience Targeting &amp; Reach
+            </h3>
+            <p style={{ margin: '0 0 24px', fontSize: '13px', color: '#64748b' }}>
+              Choose the geographic location of WhatsApp creators and select your desired viewer reach.
+            </p>
+
+            {/* Target Country */}
+            <div style={{ marginBottom: '16px' }}>
+              <CountrySelect
+                label="Target Country"
+                required
+                name="targetCountry"
+                value={formData.targetCountry}
+                onChange={handleCountryChange}
+              />
+            </div>
+
+            {/* Nationwide Option */}
+            <div style={{ marginBottom: '20px', padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={formData.isNationwide}
+                  onChange={(e) => setFormData({ ...formData, isNationwide: e.target.checked })}
+                  style={{ width: '18px', height: '18px', accentColor: '#059669', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>
+                  Target Nationwide in {formData.targetCountry}
+                </span>
+              </label>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginLeft: '28px' }}>
+                Distribute your campaign across influencers throughout the entire nation rather than specific local areas.
               </div>
             </div>
-          )}
 
-          {/* STEP 8: Review & Submit */}
-          {step === 8 && (
-            <div>
-              <h3 style={{ marginBottom: '8px' }}>Step 8: Review Advertising Order</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-                Verify your campaign configuration before submitting.
+            {/* Administrative Region & Local Areas (if not nationwide) */}
+            {!formData.isNationwide && (
+              <div style={{ marginBottom: '24px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
+                <div className="form-group" style={{ marginBottom: '16px' }}>
+                  <label className="form-label" style={{ fontWeight: '600' }}>
+                    Select Region / State / Division in {formData.targetCountry} <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  {currentRegions.length > 0 ? (
+                    <select
+                      className="form-control"
+                      value={formData.targetRegion}
+                      onChange={handleRegionChange}
+                      style={{ height: '44px', borderRadius: '8px' }}
+                    >
+                      {currentRegions.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter administrative region or province"
+                      value={formData.targetRegion}
+                      onChange={(e) => setFormData({ ...formData, targetRegion: e.target.value })}
+                      style={{ height: '44px', borderRadius: '8px' }}
+                    />
+                  )}
+                </div>
+
+                {/* Multiple Local Areas Selection with Limit Tracker */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label className="form-label" style={{ margin: 0, fontWeight: '600' }}>
+                      Select Local Target Areas
+                    </label>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: formData.targetAreas.length >= maxCampaignAreas ? '#dc2626' : '#059669' }}>
+                      Selected: {formData.targetAreas.length} / {maxCampaignAreas} Max Allowed
+                    </span>
+                  </div>
+
+                  {/* Quick-add from known LGAs/Districts */}
+                  {currentRegionLgas.length > 0 && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <select
+                        className="form-control"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddArea(e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        disabled={formData.targetAreas.length >= maxCampaignAreas}
+                        style={{ height: '44px', borderRadius: '8px' }}
+                      >
+                        <option value="">-- Click to add an area from {formData.targetRegion} --</option>
+                        {currentRegionLgas.map((lga) => (
+                          <option key={lga} value={lga} disabled={formData.targetAreas.includes(lga)}>
+                            {lga} {formData.targetAreas.includes(lga) ? '(Added)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Custom area input */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Or type a custom neighborhood/area..."
+                      value={formData.customAreaInput}
+                      onChange={(e) => setFormData({ ...formData, customAreaInput: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddArea(formData.customAreaInput);
+                        }
+                      }}
+                      disabled={formData.targetAreas.length >= maxCampaignAreas}
+                      style={{ height: '44px', borderRadius: '8px' }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => handleAddArea(formData.customAreaInput)}
+                      disabled={formData.targetAreas.length >= maxCampaignAreas || !formData.customAreaInput.trim()}
+                      style={{ padding: '0 20px', borderRadius: '8px', whiteSpace: 'nowrap' }}
+                    >
+                      + Add Area
+                    </button>
+                  </div>
+
+                  {/* Selected Areas Chips */}
+                  <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {formData.targetAreas.length === 0 ? (
+                      <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
+                        No local areas selected yet. Add at least one area or check Nationwide above.
+                      </span>
+                    ) : (
+                      formData.targetAreas.map((area) => (
+                        <span
+                          key={area}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            color: '#065f46',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                          }}
+                        >
+                          📍 {area}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveArea(area)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#065f46',
+                              cursor: 'pointer',
+                              fontWeight: '700',
+                              padding: '0 2px',
+                              lineHeight: 1,
+                            }}
+                            title={`Remove ${area}`}
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reach Package Selection */}
+            <div style={{ marginBottom: '24px' }}>
+              <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                Select Desired Audience Reach Package
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+                {packages.map((pkg) => {
+                  const isSelected = formData.selectedPackage === pkg._id;
+                  const views = pkg.minimumViews || pkg.views || 1000;
+                  return (
+                    <div
+                      key={pkg._id}
+                      onClick={() => handlePackageSelect(pkg)}
+                      style={{
+                        padding: '16px',
+                        borderRadius: '12px',
+                        border: isSelected ? '2px solid #059669' : '1px solid #cbd5e1',
+                        background: isSelected ? '#ecfdf5' : '#ffffff',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <div style={{ fontWeight: '700', fontSize: '14px', color: isSelected ? '#065f46' : '#0f172a' }}>
+                        {pkg.name}
+                      </div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#059669', margin: '4px 0' }}>
+                        {formData.currency} {Number(pkg.price).toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        {Number(views).toLocaleString()} Verified Views
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label className="form-label" style={{ fontWeight: '600' }}>Campaign Posting Duration</label>
+              <select
+                className="form-control"
+                value={formData.duration}
+                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                style={{ height: '44px', borderRadius: '8px' }}
+              >
+                {durations.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setStep(1)}
+                style={{ flex: 1, padding: '14px', borderRadius: '8px' }}
+              >
+                &larr; Back to Details
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleNextStep2}
+                style={{ flex: 2, padding: '14px', fontWeight: '600', borderRadius: '8px' }}
+              >
+                Review &amp; Proceed to Payment &rarr;
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Review & Payment Instructions & Receipt Upload */}
+        {step === 3 && (
+          <form onSubmit={handleSubmitCampaign}>
+            <div className="card" style={{ padding: '32px', marginBottom: '24px' }}>
+              <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', color: '#0f172a', fontWeight: '700' }}>
+                Step 3: Review Campaign &amp; Payment
+              </h3>
+              <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#64748b' }}>
+                Verify your order details below and follow the official payment instructions.
               </p>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span style={{ color: '#64748b' }}>Campaign Name:</span>
-                  <strong>{formData.title}</strong>
+              {/* Order Summary Box */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', marginBottom: '24px' }}>
+                <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: '#0f172a', fontWeight: '700' }}>
+                  Campaign Summary:
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Campaign:</span> <strong>{formData.title}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Category:</span> <strong>{formData.category}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Target Country:</span> <strong>{formData.targetCountry}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Target Location:</span>{' '}
+                    <strong>{formData.isNationwide ? 'Nationwide' : `${formData.targetRegion} (${formData.targetAreas.join(', ')})`}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Reach Target:</span>{' '}
+                    <strong>{Number(formData.requiredViews).toLocaleString()} Views</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Duration:</span> <strong>{formData.duration}</strong>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span style={{ color: '#64748b' }}>Category:</span>
-                  <strong>{formData.category}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span style={{ color: '#64748b' }}>Objective:</span>
-                  <strong>{formData.objective}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span style={{ color: '#64748b' }}>Target Location:</span>
-                  <strong style={{ color: '#0f172a', textAlign: 'right', maxWidth: '60%' }}>
-                    {formData.isNationwide
-                      ? '🇳🇬 Nationwide (All 36 States & FCT Abuja)'
-                      : `${formData.targetStates.join(', ')} (${formData.area})`}
-                  </strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span style={{ color: '#64748b' }}>Target Scope:</span>
-                  <strong>{formData.targetRadius}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span style={{ color: '#64748b' }}>Required Reach:</span>
-                  <strong style={{ color: '#2563eb' }}>{Number(formData.requiredViews).toLocaleString()} Views</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                  <span style={{ color: '#64748b' }}>Duration:</span>
-                  <strong>{formData.duration}</strong>
-                </div>
-                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
-                  <span style={{ fontWeight: '700' }}>Total Cost:</span>
-                  <strong style={{ color: '#059669', fontSize: '20px' }}>₦{Number(formData.price).toLocaleString()}</strong>
+
+                {formData.mediaPreviews?.length > 0 && (
+                  <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
+                    <span style={{ color: '#64748b', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Attached Creative Images ({formData.mediaPreviews.length}):</span>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {formData.mediaPreviews.map((p, i) => (
+                        <img key={i} src={p.url} alt={`Flyer ${i + 1}`} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#334155' }}>Total Payable:</span>
+                  <span style={{ fontSize: '1.5rem', fontWeight: '800', color: '#059669' }}>
+                    {formData.currency} {Number(formData.price).toLocaleString()}
+                  </span>
                 </div>
               </div>
 
-              <div className="alert alert-info" style={{ fontSize: '13px', lineHeight: '1.6' }}>
-                ℹ️ <strong>Manual Payment Notice:</strong> After submission, you will be connected with our Admin brokerage team on WhatsApp to confirm payment via bank transfer.
-                Please review our{' '}
-                <Link to="/refund-policy" target="_blank" style={{ color: '#059669', fontWeight: '700', textDecoration: 'underline' }}>
-                  Refund Policy
-                </Link>{' '}
-                and{' '}
-                <Link to="/terms" target="_blank" style={{ color: '#059669', fontWeight: '700', textDecoration: 'underline' }}>
-                  Terms & Confidentiality
-                </Link>{' '}
-                before committing payment.
+              {/* Section 13: Admin-Managed Payment Instructions */}
+              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <span style={{ fontSize: '24px' }}>🏦</span>
+                  <h4 style={{ margin: 0, fontSize: '15px', color: '#065f46', fontWeight: '700' }}>
+                    Official Payment Instructions (Admin Verified)
+                  </h4>
+                </div>
+
+                <p style={{ fontSize: '13px', color: '#047857', marginBottom: '16px', lineHeight: '1.6' }}>
+                  {paymentSettings?.instructions || 'Please transfer the exact campaign amount to our official brokerage account below and upload your receipt screenshot for admin confirmation.'}
+                </p>
+
+                <div style={{ background: '#ffffff', borderRadius: '10px', border: '1px solid #bbf7d0', padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                  <div>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Bank Name</div>
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>{paymentSettings?.bankName || 'Zenith Bank'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Account Name</div>
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>{paymentSettings?.accountName || 'MEDIOVA Media Brokerage Ltd'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Account Number</div>
+                    <div style={{ fontSize: '18px', fontWeight: '800', color: '#059669', letterSpacing: '0.5px' }}>{paymentSettings?.accountNumber || '1012345678'}</div>
+                  </div>
+                  {paymentSettings?.sortCode && (
+                    <div>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Sort / Routing Code</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{paymentSettings.sortCode}</div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setStep(7)}>← Back</button>
+              {/* Section 13.3: Payment Receipt Upload */}
+              <div style={{ padding: '20px', border: '2px dashed #cbd5e1', borderRadius: '12px', background: '#f8fafc', marginBottom: '24px' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '14px', marginBottom: '6px', display: 'block' }}>
+                  Upload Payment Transfer Receipt (Screenshot / Photo)
+                </label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/*"
+                  onChange={handleReceiptChange}
+                  className="form-control"
+                  style={{ padding: '10px' }}
+                />
+                <span className="form-hint" style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', display: 'block' }}>
+                  Upload proof of transfer. Admin reviews and confirms payment before influencers are assigned.
+                </span>
+
+                {formData.receiptPreview && (
+                  <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <img
+                      src={formData.receiptPreview}
+                      alt="Receipt Preview"
+                      style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: '#059669' }}>
+                        ✓ Receipt Attached: {formData.receiptFile?.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        Will be submitted alongside your campaign for administrator review.
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   type="button"
-                  className="btn btn-primary btn-lg btn-block"
+                  className="btn btn-ghost"
+                  onClick={() => setStep(2)}
                   disabled={submitting}
-                  onClick={handleSubmit}
+                  style={{ flex: 1, padding: '14px', borderRadius: '8px' }}
                 >
-                  {submitting ? 'Submitting Order to Broker...' : 'Submit Advertising Request →'}
+                  &larr; Back to Targeting
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting}
+                  style={{ flex: 2, padding: '14px', fontWeight: '600', borderRadius: '8px' }}
+                >
+                  {submitting ? 'Submitting Campaign & Receipt...' : 'Submit Complete Campaign Order'}
                 </button>
               </div>
             </div>
-          )}
-        </div>
+          </form>
+        )}
       </div>
     </DashboardLayout>
   );

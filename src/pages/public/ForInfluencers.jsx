@@ -14,7 +14,7 @@ export default function ForInfluencers() {
           Turn Your WhatsApp Status Views Into Steady Income
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.8)', maxWidth: '650px', margin: '0 auto 32px', fontSize: '1.15rem', lineHeight: '1.7' }}>
-          Do you average 200, 500, or 2,000+ views on your WhatsApp Status? Top Nigerian businesses are ready to pay you for 24-hour status placements.
+          Do you average 200, 500, or 2,000+ views on your WhatsApp Status? Leading commercial businesses and brands are ready to pay you for 24-hour status placements.
         </p>
         <Link to="/register?role=influencer" className="btn btn-lg" style={{ background: 'var(--brand-yellow)', color: '#0F172A', fontWeight: '800' }}>
           Join As An Influencer Today &rarr;
@@ -38,10 +38,10 @@ export default function ForInfluencers() {
             </p>
           </div>
           <div className="card" style={{ padding: '24px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '12px' }}></div>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Direct Bank Transfers</h3>
+            <div style={{ fontSize: '36px', marginBottom: '12px' }}>💳</div>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Guaranteed Payouts</h3>
             <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>
-              Submit simple status and view screenshots. Once verified, get paid directly to your Nigerian commercial bank account.
+              Submit clean screen-recording video proof of your 24-hour status views. Once verified, receive payouts directly to your registered bank account.
             </p>
           </div>
         </div>
@@ -53,13 +53,13 @@ export default function ForInfluencers() {
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', textAlign: 'left', maxWidth: '800px', margin: '0 auto 32px' }}>
             <div style={{ background: 'white', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-               <strong>Minimum 500+ Views:</strong> Consistent average views on your WhatsApp stories.
+               <strong>Audited Views:</strong> Consistent average views on your WhatsApp stories, verified by video proof.
             </div>
             <div style={{ background: 'white', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-               <strong>Real Audiences:</strong> Genuine Nigerian contacts, no bot groups or fake screenshots.
+               <strong>Real Audiences:</strong> Genuine organic contacts, no bot groups or manipulated media.
             </div>
             <div style={{ background: 'white', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-               <strong>Reliable Completion:</strong> Ability to post within instructions and keep ads up for 24h.
+               <strong>Video Evidence:</strong> Clear screen recording demonstrating full 24-hour status viewer metrics.
             </div>
             <div style={{ background: 'white', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                <strong>Active WhatsApp:</strong> Responsive to assigned gigs and notification alerts.

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api' ;
-// 'https://mediova-backend.onrender.com/api'
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
 const API = axios.create({
   baseURL,
   headers: { 'Content-Type': 'application/json' },
@@ -14,6 +14,10 @@ API.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Let axios set proper boundary header when payload is FormData
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 
@@ -22,12 +26,13 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Do not redirect or purge storage if 401 was returned by login/register endpoints
       const url = error.config?.url || '';
-      const isAuthEndpoint = url.includes('/auth/login') ||
-                             url.includes('/auth/register') ||
-                             url.includes('/auth/admin-register') ||
-                             url.includes('/auth/forgot-password');
+      const isAuthEndpoint =
+        url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/google') ||
+        url.includes('/auth/admin-register') ||
+        url.includes('/auth/forgot-password');
 
       if (!isAuthEndpoint) {
         localStorage.removeItem('mediova_token');
@@ -47,6 +52,7 @@ API.interceptors.response.use(
 // AUTH
 // =====================
 export const register = (data) => API.post('/auth/register', data);
+export const googleAuth = (data) => API.post('/auth/google', data);
 export const login = (data) => API.post('/auth/login', data);
 export const verifyEmail = (data) => API.post('/auth/verify-email', data);
 export const resendVerification = (data) => API.post('/auth/resend-verification', data);
@@ -62,10 +68,15 @@ export const getInfluencerProfile = () => API.get('/influencers/profile');
 export const updateInfluencerProfile = (data) => API.put('/influencers/profile', data);
 export const updateAvailability = (data) => API.patch('/influencers/availability', data);
 export const updateBankDetails = (data) => API.put('/influencers/bank-details', data);
+export const submitVerificationVideo = (formData, onUploadProgress) =>
+  API.post('/influencers/verify-account', formData, {
+    timeout: 180000,
+    onUploadProgress,
+  });
+export const getVerificationStatus = () => API.get('/influencers/verification-status');
 export const submitReachProof = (formData, onUploadProgress) =>
   API.post('/influencers/reach-proof', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 180000, // 3 minutes for file uploads
+    timeout: 180000,
     onUploadProgress,
   });
 export const getMyGigs = (params) => API.get('/influencers/gigs', { params });
@@ -74,8 +85,7 @@ export const acceptGig = (id) => API.put(`/influencers/gigs/${id}/accept`);
 export const declineGig = (id, data) => API.put(`/influencers/gigs/${id}/decline`, data);
 export const submitGigProof = (id, formData, onUploadProgress) =>
   API.post(`/influencers/gigs/${id}/submit`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 180000, // 3 minutes for file uploads
+    timeout: 180000,
     onUploadProgress,
   });
 export const getMyEarnings = () => API.get('/influencers/earnings');
@@ -87,7 +97,10 @@ export const getVendorProfile = () => API.get('/vendors/profile');
 export const updateVendorProfile = (data) => API.put('/vendors/profile', data);
 export const getOrderOptions = () => API.get('/vendors/order-options');
 export const createCampaign = (formData) =>
-  API.post('/vendors/campaigns', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  API.post('/vendors/campaigns', formData, { timeout: 180000 });
+export const submitPaymentReceipt = (id, formData, onUploadProgress) =>
+  API.post(`/vendors/campaigns/${id}/receipt`, formData, { timeout: 180000, onUploadProgress });
+export const reviewCompletedWork = (id, data) => API.put(`/vendors/campaigns/${id}/review-work`, data);
 export const getMyCampaigns = (params) => API.get('/vendors/campaigns', { params });
 export const getVendorCampaign = (id) => API.get(`/vendors/campaigns/${id}`);
 
@@ -97,6 +110,11 @@ export const getVendorCampaign = (id) => API.get(`/vendors/campaigns/${id}`);
 export const adminGetDashboard = () => API.get('/admin/dashboard');
 export const adminGetUsers = (params) => API.get('/admin/users', { params });
 export const adminUpdateUserStatus = (id, data) => API.patch(`/admin/users/${id}/status`, data);
+
+// Influencer Verification
+export const adminGetVerifications = (params) => API.get('/admin/verifications', { params });
+export const adminReviewVerification = (id, data) => API.patch(`/admin/verifications/${id}/review`, data);
+
 export const adminGetInfluencers = (params) => API.get('/admin/influencers', { params });
 export const adminMatchInfluencers = (params) => API.get('/admin/influencers/match', { params });
 export const adminGetInfluencer = (id) => API.get(`/admin/influencers/${id}`);
@@ -104,14 +122,26 @@ export const adminVerifyInfluencer = (id, data) => API.patch(`/admin/influencers
 export const adminUpdateInfluencerAvailability = (id, data) => API.patch(`/admin/influencers/${id}/availability`, data);
 export const adminGetVendors = (params) => API.get('/admin/vendors', { params });
 export const adminGetVendorDetail = (id) => API.get(`/admin/vendors/${id}`);
+
+// Campaigns & Payment Review
 export const adminGetCampaigns = (params) => API.get('/admin/campaigns', { params });
 export const adminGetCampaign = (id) => API.get(`/admin/campaigns/${id}`);
 export const adminUpdateCampaign = (id, data) => API.patch(`/admin/campaigns/${id}/status`, data);
+export const adminVerifyPayment = (id, data) => API.patch(`/admin/campaigns/${id}/verify-payment`, data);
+export const adminSubmitCompletedWork = (id, formData, onUploadProgress) =>
+  API.post(`/admin/campaigns/${id}/submit-completed-work`, formData, { timeout: 180000, onUploadProgress });
+
+// Payments
+export const adminGetPayments = (params) => API.get('/admin/payments', { params });
+
+// Gigs
 export const adminGetGigs = (params) => API.get('/admin/gigs', { params });
 export const adminGetGigDetail = (id) => API.get(`/admin/gigs/${id}`);
 export const adminAssignGigs = (data) => API.post('/admin/gigs/assign', data);
 export const adminReviewGig = (data) => API.post('/admin/gigs/review', data);
 export const adminGetSubmissions = (params) => API.get('/admin/gigs/submissions', { params });
+
+// Transactions & Settings
 export const adminGetTransactions = (params) => API.get('/admin/transactions', { params });
 export const adminGetEarnings = (params) => API.get('/admin/transactions', { params });
 export const adminMarkPaid = (id, data) => API.patch(`/admin/transactions/${id}/pay`, data);

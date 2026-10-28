@@ -1,100 +1,186 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { register } from '../../services/api';
+import { register, googleAuth } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../components/ui/Toast';
 import PhoneInput from '../../components/ui/PhoneInput';
 import PasswordInput, { checkPasswordCriteria } from '../../components/ui/PasswordInput';
-import { NIGERIAN_STATES, STATE_LGAS, isValidPhoneNumber } from '../../config/locations';
-
-const categoriesList = [
-  'Fashion', 'Beauty', 'Electronics', 'Technology', 'Food', 'Restaurants',
-  'Real Estate', 'Education', 'Finance', 'Business', 'Events', 'Entertainment',
-  'Sports', 'Travel', 'Fitness', 'Automobile', 'E-commerce', 'Jobs & Career', 'Lifestyle',
-];
+import CountrySelect from '../../components/ui/CountrySelect';
+import AdministrativeLocationSelect from '../../components/ui/AdministrativeLocationSelect';
+import TermsModal from '../../components/ui/TermsModal';
+import GoogleAuthButton from '../../components/ui/GoogleAuthButton';
+import { isValidPhoneNumber, getCountryMeta } from '../../config/locations';
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role') === 'vendor' ? 'vendor' : 'influencer';
 
+  const navigate = useNavigate();
   const { saveSession } = useAuth();
   const [role, setRole] = useState(initialRole);
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [registered, setRegistered] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+
+  // Google Onboarding State (when user signs in with Google but needs to complete profile)
+  const [googleOnboardingUser, setGoogleOnboardingUser] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
+    whatsappNumber: '',
     password: '',
     confirmPassword: '',
-    // Country & Location
+    // Country & Administrative Location
     country: 'Nigeria',
-    state: 'Lagos',
-    city: 'Lagos',
-    lga: 'Eti-Osa (Ikoyi/Victoria Island/Lekki)',
+    countryCode: 'NG',
+    region: 'Lagos',
+    subDivision: 'Ikeja (Alausa/GRA)',
     area: '',
-    additionalAreas: '',
-    // Influencer
-    whatsappNumber: '',
-    averageViews: '',
-    selectedCategories: ['Fashion', 'Lifestyle'],
-    // Vendor
+    // Vendor specific
     businessName: '',
-    contactPerson: '',
     businessCategory: 'General Advertising',
     description: '',
-    businessAddress: '',
-    website: '',
-    instagram: '',
+    // Terms & Conditions
+    termsAccepted: false,
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
-  const handleStateChange = (e) => {
-    const newState = e.target.value;
-    const lgas = STATE_LGAS[newState] || [];
-    setFormData({
-      ...formData,
-      state: newState,
-      lga: lgas.length > 0 ? lgas[0] : '',
-      city: newState,
-    });
+  const handleCountryChange = (e) => {
+    const { value, countryCode } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      country: value,
+      countryCode: countryCode || 'NG',
+      region: '', // Clear child on country change
+      subDivision: '',
+      area: '',
+    }));
   };
 
-  const handleCategoryToggle = (cat) => {
-    const exists = formData.selectedCategories.includes(cat);
-    if (exists) {
-      setFormData({
-        ...formData,
-        selectedCategories: formData.selectedCategories.filter((c) => c !== cat),
+  const handleLocationChange = (locationData) => {
+    setFormData((prev) => ({
+      ...prev,
+      region: locationData.region,
+      subDivision: locationData.subDivision,
+      area: locationData.area,
+    }));
+  };
+
+  // Google OAuth Success Handler
+  const handleGoogleSuccess = async (credential) => {
+    setLoading(true);
+    try {
+      const res = await googleAuth({
+        credential,
+        role,
+        profileData: formData.termsAccepted
+          ? {
+              whatsappNumber: formData.whatsappNumber,
+              country: formData.country,
+              region: formData.region,
+              subDivision: formData.subDivision,
+              area: formData.area,
+              businessName: formData.businessName,
+              termsAccepted: formData.termsAccepted,
+            }
+          : null,
       });
-    } else {
-      setFormData({
-        ...formData,
-        selectedCategories: [...formData.selectedCategories, cat],
-      });
+
+      if (res.data.requiresOnboarding) {
+        setGoogleOnboardingUser(res.data.googleUser);
+        setFormData((prev) => ({
+          ...prev,
+          name: res.data.googleUser.name || prev.name,
+          email: res.data.googleUser.email || prev.email,
+        }));
+        toast.info('Google account connected! Please complete your WhatsApp contact number and location to finish registration.');
+      } else if (res.data.token && res.data.user) {
+        saveSession(res.data.user, res.data.token);
+        toast.success(`Welcome to MEDIOVA, ${res.data.user.name}!`);
+        if (res.data.user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (res.data.user.role === 'vendor') {
+          navigate('/vendor/dashboard');
+        } else {
+          navigate('/influencer/dashboard');
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Google authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleStep1Next = () => {
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.password) {
+  // Google Onboarding Form Submission
+  const handleCompleteGoogleOnboarding = async (e) => {
+    e.preventDefault();
+    if (!formData.termsAccepted) {
+      toast.warning('You must accept the Terms and Conditions to complete registration.');
+      return;
+    }
+
+    if (!formData.whatsappNumber || !isValidPhoneNumber(formData.whatsappNumber)) {
+      toast.error('Please enter a valid WhatsApp contact number in international format.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await googleAuth({
+        credential: googleOnboardingUser.googleId, // or pass googleId/email for completion
+        role,
+        profileData: {
+          whatsappNumber: formData.whatsappNumber,
+          country: formData.country,
+          region: formData.region,
+          subDivision: formData.subDivision,
+          area: formData.area,
+          businessName: formData.businessName,
+          termsAccepted: true,
+        },
+      });
+
+      if (res.data.token && res.data.user) {
+        saveSession(res.data.user, res.data.token);
+        toast.success('Registration completed successfully!');
+        if (role === 'vendor') {
+          navigate('/vendor/dashboard');
+        } else {
+          navigate('/influencer/dashboard');
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to complete registration.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Standard Email/Password Form Submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.whatsappNumber.trim() || !formData.password) {
       toast.warning('Please fill in all required fields marked with *.');
       return;
     }
 
-    if (!isValidPhoneNumber(formData.phone)) {
-      toast.error('Please provide a valid international telephone number.');
+    if (!formData.termsAccepted) {
+      toast.warning('You must read and agree to the Terms and Conditions to register.');
       return;
     }
 
-    if (role === 'influencer' && formData.whatsappNumber && !isValidPhoneNumber(formData.whatsappNumber)) {
-      toast.error('Please provide a valid WhatsApp number.');
+    if (!isValidPhoneNumber(formData.whatsappNumber)) {
+      toast.error('Please provide a valid WhatsApp phone number with international calling code.');
       return;
     }
 
@@ -110,470 +196,359 @@ export default function RegisterPage() {
       return;
     }
 
-    setStep(2);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.area.trim()) {
-      toast.warning('Please specify your Area / Neighborhood.');
-      return;
-    }
-
     setLoading(true);
-
     try {
       const payload = {
         name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim(),
+        email: formData.email.trim(),
         password: formData.password,
         role,
-        state: formData.state,
-        city: formData.city.trim(),
-        lga: formData.lga.trim(),
-        area: formData.area.trim(),
+        whatsappNumber: formData.whatsappNumber,
+        country: formData.country,
+        countryCode: formData.countryCode,
+        region: formData.region,
+        subDivision: formData.subDivision,
+        area: formData.area,
+        termsAccepted: true,
+        // Vendor fields
+        businessName: role === 'vendor' ? (formData.businessName || formData.name) : undefined,
+        businessCategory: role === 'vendor' ? formData.businessCategory : undefined,
+        description: role === 'vendor' ? formData.description : undefined,
       };
 
-      if (role === 'influencer') {
-        payload.whatsappNumber = formData.whatsappNumber || formData.phone;
-        payload.averageViews = Number(formData.averageViews) || 0;
-        payload.categories = formData.selectedCategories;
-        payload.additionalAreas = formData.additionalAreas
-          ? formData.additionalAreas.split(',').map((s) => s.trim()).filter(Boolean)
-          : [];
-      } else {
-        payload.businessName = formData.businessName.trim() || formData.name.trim();
-        payload.contactPerson = formData.contactPerson.trim() || formData.name.trim();
-        payload.businessCategory = formData.businessCategory;
-        payload.description = formData.description.trim();
-        payload.businessAddress = formData.businessAddress.trim();
-        payload.website = formData.website.trim();
-        payload.socialLinks = { instagram: formData.instagram.trim() };
-      }
+      const res = await register(payload);
 
-      const { data } = await register(payload);
-
-      if (data.success) {
-        if (data.token && data.user) {
-          saveSession(data.user, data.token);
+      if (res.data.success && res.data.token) {
+        saveSession(res.data.user, res.data.token);
+        toast.success(
+          role === 'influencer'
+            ? 'Account created! Please complete account verification to become eligible for gigs.'
+            : 'Vendor account created successfully!'
+        );
+        if (role === 'vendor') {
+          navigate('/vendor/dashboard');
+        } else {
+          navigate('/influencer/dashboard');
         }
-        setRegistered(true);
-        setRegisteredEmail(formData.email);
-        toast.success('Registration successful! Welcome to MEDIOVA.');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed. Please check the fields and try again.');
+      toast.error(err.response?.data?.message || 'Registration failed. Please check your information and try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  if (registered) {
-    const dashPath = role === 'vendor' ? '/vendor' : '/influencer';
-    return (
-      <div className="auth-page">
-        <div className="auth-side">
-          <div className="auth-side-logo">MEDIOVA</div>
-          <h2>Account Created Successfully!</h2>
-          <p>Your {role === 'vendor' ? 'Vendor / Advertiser' : 'WhatsApp Influencer'} account is active and ready to use.</p>
-        </div>
-        <div className="auth-form-side">
-          <div className="auth-form-container" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
-            <h1 style={{ fontSize: '1.75rem', marginBottom: '12px' }}>Welcome to MEDIOVA!</h1>
-            <p style={{ color: '#475569', lineHeight: '1.6', marginBottom: '28px' }}>
-              Your account has been registered for <strong>{registeredEmail}</strong>. You can now access your dashboard immediately.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Link to={dashPath} className="btn btn-primary btn-block btn-lg">
-                Continue to Dashboard →
-              </Link>
-              <Link to="/login" className="btn btn-secondary btn-block">
-                Go to Sign In
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const currentLgas = STATE_LGAS[formData.state] || [];
-
   return (
-    <div className="auth-page">
-      <div className="auth-side">
-        <div className="auth-side-logo">MEDIOVA</div>
-        <h2>Direct WhatsApp Reach Across Nigeria</h2>
-        <p>
-          Connect verified Nigerian WhatsApp creators with growing businesses for high-converting Status promotions.
-        </p>
-        <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(255,255,255,0.08)', borderRadius: '8px', fontSize: '13px' }}>
-          <strong>📍 Operating Coverage:</strong> Nigeria (All 36 States & FCT Abuja). International brand registrations supported with standard calling codes.
-        </div>
-      </div>
-
-      <div className="auth-form-side">
-        <div className="auth-form-container">
-          <div className="auth-form-header">
-            <Link to="/" style={{ color: '#059669', fontWeight: '800', fontSize: '18px', display: 'inline-block', marginBottom: '16px' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '40px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '640px', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', padding: '36px 32px' }}>
+        
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#047857', margin: 0, letterSpacing: '-0.5px' }}>
               MEDIOVA
-            </Link>
-            <h1>Create an Account</h1>
-            <p>Join Nigeria's premier WhatsApp Status advertising marketplace</p>
+            </h1>
+          </Link>
+          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '6px' }}>
+            The Global WhatsApp Advertising &amp; Gig Marketplace
+          </p>
+        </div>
+
+        {/* Role Toggle */}
+        {!googleOnboardingUser && (
+          <div style={{ marginBottom: '24px' }}>
+            <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px', display: 'block', textAlign: 'center' }}>
+              I want to register as a:
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setRole('influencer')}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: role === 'influencer' ? '2px solid #059669' : '1px solid #cbd5e1',
+                  background: role === 'influencer' ? '#ecfdf5' : '#ffffff',
+                  color: role === 'influencer' ? '#065f46' : '#475569',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  transition: 'all 0.2s',
+                }}
+              >
+                📱 WhatsApp Influencer
+                <div style={{ fontSize: '11px', fontWeight: '400', color: '#64748b', marginTop: '2px' }}>
+                  Earn from status views
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRole('vendor')}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: role === 'vendor' ? '2px solid #059669' : '1px solid #cbd5e1',
+                  background: role === 'vendor' ? '#ecfdf5' : '#ffffff',
+                  color: role === 'vendor' ? '#065f46' : '#475569',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  transition: 'all 0.2s',
+                }}
+              >
+                💼 Business / Vendor
+                <div style={{ fontSize: '11px', fontWeight: '400', color: '#64748b', marginTop: '2px' }}>
+                  Advertise to real audiences
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Google Onboarding Notice */}
+        {googleOnboardingUser ? (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '16px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {googleOnboardingUser.picture && (
+                <img
+                  src={googleOnboardingUser.picture}
+                  alt={googleOnboardingUser.name}
+                  style={{ width: '40px', height: '40px', borderRadius: '50%' }}
+                />
+              )}
+              <div>
+                <h4 style={{ margin: 0, fontSize: '14px', color: '#166534' }}>
+                  Connected with Google as {googleOnboardingUser.name}
+                </h4>
+                <p style={{ margin: 0, fontSize: '12px', color: '#15803d' }}>
+                  {googleOnboardingUser.email} &bull; Role: <strong>{role === 'vendor' ? 'Business / Vendor' : 'Influencer'}</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Primary Option: Continue with Google */}
+            <div style={{ marginBottom: '20px' }}>
+              <GoogleAuthButton
+                role={role}
+                onCredentialSuccess={handleGoogleSuccess}
+                onError={(msg) => toast.info(msg)}
+              />
+            </div>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', color: '#94a3b8' }}>
+              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+              <span style={{ padding: '0 12px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                or register with email
+              </span>
+              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+            </div>
+          </>
+        )}
+
+        {/* Registration Form */}
+        <form onSubmit={googleOnboardingUser ? handleCompleteGoogleOnboarding : handleSubmit}>
+          {/* Full Name / Contact Person */}
+          <div className="form-group" style={{ marginBottom: '16px' }}>
+            <label className="form-label" htmlFor="reg-name" style={{ fontWeight: '500', fontSize: '14px', marginBottom: '6px' }}>
+              {role === 'vendor' ? 'Contact Person Name' : 'Full Name'} <span className="required" style={{ color: '#dc2626' }}>*</span>
+            </label>
+            <input
+              id="reg-name"
+              type="text"
+              name="name"
+              required
+              className="form-control"
+              placeholder="e.g. Samuel Okon"
+              value={formData.name}
+              onChange={handleChange}
+              style={{ height: '44px', borderRadius: '8px' }}
+            />
           </div>
 
-          {/* Role Selector Tabs */}
-          <div className="role-selector" style={{ marginBottom: '24px' }}>
-            <div
-              className={`role-option ${role === 'influencer' ? 'selected' : ''}`}
-              onClick={() => { setRole('influencer'); setStep(1); }}
-            >
-              <div className="role-option-icon">📱</div>
-              <div className="role-option-label">WhatsApp Influencer</div>
-              <div className="role-option-desc">Monetize your Status views</div>
+          {/* Business Name (Vendor only) */}
+          {role === 'vendor' && (
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label" htmlFor="reg-businessName" style={{ fontWeight: '500', fontSize: '14px', marginBottom: '6px' }}>
+                Business or Brand Name <span className="required" style={{ color: '#dc2626' }}>*</span>
+              </label>
+              <input
+                id="reg-businessName"
+                type="text"
+                name="businessName"
+                required
+                className="form-control"
+                placeholder="e.g. Apex Apparel Global"
+                value={formData.businessName}
+                onChange={handleChange}
+                style={{ height: '44px', borderRadius: '8px' }}
+              />
             </div>
-            <div
-              className={`role-option ${role === 'vendor' ? 'selected' : ''}`}
-              onClick={() => { setRole('vendor'); setStep(1); }}
-            >
-              <div className="role-option-icon">💼</div>
-              <div className="role-option-label">Business / Vendor</div>
-              <div className="role-option-desc">Advertise your business</div>
+          )}
+
+          {/* Email Address */}
+          {!googleOnboardingUser && (
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label" htmlFor="reg-email" style={{ fontWeight: '500', fontSize: '14px', marginBottom: '6px' }}>
+                Email Address <span className="required" style={{ color: '#dc2626' }}>*</span>
+              </label>
+              <input
+                id="reg-email"
+                type="email"
+                name="email"
+                required
+                className="form-control"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                style={{ height: '44px', borderRadius: '8px' }}
+              />
             </div>
+          )}
+
+          {/* Single WhatsApp Contact Number */}
+          <div style={{ marginBottom: '16px' }}>
+            <PhoneInput
+              label="Primary WhatsApp Contact Number"
+              required
+              name="whatsappNumber"
+              value={formData.whatsappNumber}
+              onChange={handleChange}
+              defaultCountryCode={formData.countryCode}
+              hint="Your single primary contact number for gig assignments, status verification, and alerts."
+            />
           </div>
 
-          <form onSubmit={handleSubmit}>
-            {step === 1 && (
-              <>
-                <h4 style={{ marginBottom: '16px', color: '#0f172a' }}>Step 1: Account Information</h4>
+          {/* Global Country Selector */}
+          <div style={{ marginBottom: '16px' }}>
+            <CountrySelect
+              label="Country of Residence / Operation"
+              required
+              name="country"
+              value={formData.country}
+              onChange={handleCountryChange}
+            />
+          </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="reg-name">Full Name <span className="required">*</span></label>
-                  <input
-                    id="reg-name"
-                    type="text"
-                    required
-                    name="name"
-                    className="form-control"
-                    placeholder="e.g. Amaka Okafor"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
-                </div>
+          {/* Dynamic Administrative Location */}
+          <div style={{ marginBottom: '16px' }}>
+            <AdministrativeLocationSelect
+              country={formData.country}
+              region={formData.region}
+              subDivision={formData.subDivision}
+              area={formData.area}
+              onChange={handleLocationChange}
+              required
+            />
+          </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="reg-email">Email Address <span className="required">*</span></label>
-                  <input
-                    id="reg-email"
-                    type="email"
-                    required
-                    name="email"
-                    className="form-control"
-                    placeholder="amaka@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
+          {/* Password (if not Google onboarding) */}
+          {!googleOnboardingUser && (
+            <>
+              <div style={{ marginBottom: '16px' }}>
+                <PasswordInput
+                  id="reg-password"
+                  name="password"
+                  label="Password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  showCriteria
+                />
+              </div>
 
-                <div className="form-row">
-                  <PhoneInput
-                    label="Phone Number"
-                    required
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="08012345678"
-                    hint="International format normalized automatically."
-                  />
-                  {role === 'influencer' && (
-                    <PhoneInput
-                      label="WhatsApp Number"
-                      required
-                      name="whatsappNumber"
-                      value={formData.whatsappNumber}
-                      onChange={handleChange}
-                      placeholder="08012345678"
-                      hint="Where gig updates are confirmed."
-                    />
-                  )}
-                </div>
+              <div style={{ marginBottom: '20px' }}>
+                <PasswordInput
+                  id="reg-confirmPassword"
+                  name="confirmPassword"
+                  label="Confirm Password"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                />
+              </div>
+            </>
+          )}
 
-                <div className="form-row">
-                  <PasswordInput
-                    label="Password"
-                    required
-                    name="password"
-                    placeholder="Min. 8 characters"
-                    value={formData.password}
-                    onChange={handleChange}
-                    showCriteria={true}
-                    autoComplete="new-password"
-                  />
-                  <PasswordInput
-                    label="Confirm Password"
-                    required
-                    name="confirmPassword"
-                    placeholder="Repeat password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    autoComplete="new-password"
-                  />
-                </div>
+          {/* Influencer Account Verification Advisory */}
+          {role === 'influencer' && (
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', fontSize: '13px', color: '#475569' }}>
+              <strong>Notice:</strong> Following registration, influencers enter a <em>Pending Verification</em> state. You must record and submit a short verification video to be approved for paid gig assignments.
+            </div>
+          )}
 
+          {/* Mandatory Terms and Conditions Acceptance */}
+          <div style={{ marginBottom: '24px', padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '13px', color: '#1e293b', margin: 0 }}>
+              <input
+                type="checkbox"
+                name="termsAccepted"
+                checked={formData.termsAccepted}
+                onChange={handleChange}
+                required
+                style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#059669', flexShrink: 0, cursor: 'pointer' }}
+              />
+              <span>
+                I have read and agree to the{' '}
                 <button
                   type="button"
-                  className="btn btn-primary btn-block"
-                  style={{ marginTop: '20px' }}
-                  onClick={handleStep1Next}
+                  onClick={() => setTermsModalOpen(true)}
+                  style={{ background: 'none', border: 'none', padding: 0, color: '#059669', fontWeight: '600', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}
                 >
-                  Continue to Step 2: Location & Reach →
+                  Terms and Conditions
                 </button>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, color: '#0f172a' }}>
-                    {role === 'influencer' ? 'Step 2: Location & Reach Details' : 'Step 2: Business & Location Details'}
-                  </h4>
-                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setStep(1)}>
-                    ← Back to Step 1
-                  </button>
-                </div>
-
-                <div className="alert alert-info" style={{ fontSize: '13px', marginBottom: '16px' }}>
-                  📍 <strong>Geographic Scope:</strong> Audience distribution and verified gigs currently operate across Nigeria. Select your state and local government area.
-                </div>
-
-                {/* Dependent Location Fields */}
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="reg-country">Country</label>
-                    <select
-                      id="reg-country"
-                      name="country"
-                      className="form-control"
-                      value={formData.country}
-                      onChange={handleChange}
-                    >
-                      <option value="Nigeria">Nigeria 🇳🇬</option>
-                      <option value="Ghana">Ghana 🇬🇭</option>
-                      <option value="Kenya">Kenya 🇰🇪</option>
-                      <option value="Other">Other / International</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="reg-state">State / Region <span className="required">*</span></label>
-                    <select
-                      id="reg-state"
-                      name="state"
-                      className="form-control"
-                      value={formData.state}
-                      onChange={handleStateChange}
-                    >
-                      {NIGERIAN_STATES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="reg-lga">LGA (Local Government Area)</label>
-                    {currentLgas.length > 0 ? (
-                      <select
-                        id="reg-lga"
-                        name="lga"
-                        className="form-control"
-                        value={formData.lga}
-                        onChange={handleChange}
-                      >
-                        {currentLgas.map((l) => (
-                          <option key={l} value={l}>{l}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        id="reg-lga"
-                        type="text"
-                        name="lga"
-                        className="form-control"
-                        placeholder="e.g. Local Area"
-                        value={formData.lga}
-                        onChange={handleChange}
-                      />
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="reg-area">Area / Neighborhood <span className="required">*</span></label>
-                    <input
-                      id="reg-area"
-                      type="text"
-                      required
-                      name="area"
-                      className="form-control"
-                      placeholder="e.g. Lekki Phase 1, Yaba, Ikeja"
-                      value={formData.area}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-
-                {role === 'influencer' ? (
-                  <>
-                    <div className="form-group">
-                      <label className="form-label">Other Areas You Reach (Optional)</label>
-                      <input
-                        type="text"
-                        name="additionalAreas"
-                        className="form-control"
-                        placeholder="e.g. Victoria Island, Ikoyi, Ajah (comma-separated)"
-                        value={formData.additionalAreas}
-                        onChange={handleChange}
-                      />
-                      <span className="form-hint">Enables advertisers to match with you when targeting neighboring districts.</span>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Estimated WhatsApp Status Views</label>
-                      <input
-                        type="number"
-                        name="averageViews"
-                        min="100"
-                        className="form-control"
-                        placeholder="e.g. 1500"
-                        value={formData.averageViews}
-                        onChange={handleChange}
-                      />
-                      <span className="form-hint">You will submit status screenshots in your dashboard to verify this metric.</span>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Promotion Categories</label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
-                        {categoriesList.map((cat) => {
-                          const selected = formData.selectedCategories.includes(cat);
-                          return (
-                            <button
-                              type="button"
-                              key={cat}
-                              onClick={() => handleCategoryToggle(cat)}
-                              style={{
-                                padding: '6px 12px',
-                                borderRadius: '16px',
-                                border: selected ? '2px solid #059669' : '1px solid #cbd5e1',
-                                background: selected ? '#ecfdf5' : 'white',
-                                color: selected ? '#065f46' : '#475569',
-                                fontWeight: selected ? '700' : '500',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              {selected ? `✓ ${cat}` : `+ ${cat}`}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="reg-bname">Business / Company Name <span className="required">*</span></label>
-                      <input
-                        id="reg-bname"
-                        type="text"
-                        required
-                        name="businessName"
-                        className="form-control"
-                        placeholder="e.g. Lekki Luxe Boutique"
-                        value={formData.businessName}
-                        onChange={handleChange}
-                      />
-                    </div>
-
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="reg-bcat">Business Category</label>
-                        <select
-                          id="reg-bcat"
-                          name="businessCategory"
-                          className="form-control"
-                          value={formData.businessCategory}
-                          onChange={handleChange}
-                        >
-                          {categoriesList.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="reg-ig">Instagram Handle (Optional)</label>
-                        <input
-                          id="reg-ig"
-                          type="text"
-                          name="instagram"
-                          className="form-control"
-                          placeholder="@mybusiness"
-                          value={formData.instagram}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="reg-baddr">Business Address (Optional)</label>
-                      <input
-                        id="reg-baddr"
-                        type="text"
-                        name="businessAddress"
-                        className="form-control"
-                        placeholder="e.g. Suite 4, Admiralty Way, Lekki"
-                        value={formData.businessAddress}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div style={{ margin: '20px 0 16px', fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>
-                  By registering, you acknowledge and agree to MEDIOVA's{' '}
-                  <Link to="/terms" target="_blank" style={{ color: '#059669', textDecoration: 'underline' }}>
-                    Terms of Service & Confidentiality
-                  </Link>
-                  ,{' '}
-                  <Link to="/privacy" target="_blank" style={{ color: '#059669', textDecoration: 'underline' }}>
-                    Privacy Policy (NDPA 2023)
-                  </Link>
-                  , and{' '}
-                  <Link to="/refund-policy" target="_blank" style={{ color: '#059669', textDecoration: 'underline' }}>
-                    Refund Policy
-                  </Link>
-                  .
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-block btn-lg"
-                  disabled={loading}
-                >
-                  {loading ? 'Submitting Registration...' : 'Complete Registration →'}
-                </button>
-              </>
-            )}
-          </form>
-
-          <div className="auth-link">
-            Already have an account? <Link to="/login">Sign in here</Link>
+                {' '}and acknowledge the global platform policies.
+              </span>
+            </label>
           </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading || !formData.termsAccepted}
+            style={{
+              width: '100%',
+              padding: '14px',
+              fontSize: '15px',
+              fontWeight: '600',
+              borderRadius: '8px',
+              background: formData.termsAccepted ? '#059669' : '#94a3b8',
+              border: 'none',
+              color: '#ffffff',
+              cursor: formData.termsAccepted ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+          >
+            {loading ? (
+              <span className="spinner-sm" />
+            ) : googleOnboardingUser ? (
+              'Complete Registration & Proceed to Dashboard'
+            ) : (
+              `Create ${role === 'vendor' ? 'Vendor' : 'Influencer'} Account`
+            )}
+          </button>
+        </form>
+
+        {/* Login Link */}
+        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: '#64748b' }}>
+          Already have an account?{' '}
+          <Link to="/login" style={{ color: '#059669', fontWeight: '600', textDecoration: 'none' }}>
+            Sign In
+          </Link>
         </div>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
     </div>
   );
 }

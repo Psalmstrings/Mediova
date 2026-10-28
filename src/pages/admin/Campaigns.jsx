@@ -138,7 +138,21 @@ export default function AdminCampaigns() {
                         <div style={{ fontSize: '12px', color: '#64748b' }}>{c.category}</div>
                       </td>
                       <td>
-                        {c.targetLocation?.area}, {c.targetLocation?.state}
+                        {c.isNationwide ? (
+                          <span className="badge badge-success">Nationwide</span>
+                        ) : (
+                          <div>
+                            <strong>{c.targetCountry || 'Global'}</strong>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                              {c.targetRegion || c.targetLocation?.state || ''}
+                              {c.targetAreas?.length > 0
+                                ? ` (${c.targetAreas.length} areas)`
+                                : c.targetLocation?.area
+                                ? ` (${c.targetLocation.area})`
+                                : ''}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td>
                         <strong style={{ color: '#2563eb' }}>{Number(c.requiredViews).toLocaleString()}</strong>

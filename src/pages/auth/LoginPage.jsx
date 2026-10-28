@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { login } from '../../services/api';
+import { login, googleAuth } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from '../../components/ui/Toast';
 import PasswordInput from '../../components/ui/PasswordInput';
+import GoogleAuthButton from '../../components/ui/GoogleAuthButton';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,32 @@ export default function LoginPage() {
   const { saveSession } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleGoogleSuccess = async (credential) => {
+    setLoading(true);
+    try {
+      const res = await googleAuth({ credential });
+      if (res.data.token && res.data.user) {
+        saveSession(res.data.user, res.data.token);
+        toast.success(`Welcome back, ${res.data.user.name}!`);
+
+        const from = location.state?.from?.pathname;
+        if (from) {
+          navigate(from, { replace: true });
+        } else {
+          const dashMap = { admin: '/admin', influencer: '/influencer', vendor: '/vendor' };
+          navigate(dashMap[res.data.user.role] || '/', { replace: true });
+        }
+      } else if (res.data.requiresOnboarding) {
+        toast.info('Please complete your registration onboarding to continue.');
+        navigate(`/register?google=true`);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Google sign-in failed. Please try again or use your password.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -53,20 +80,20 @@ export default function LoginPage() {
           MEDIOVA
         </div>
         <h2>Turn WhatsApp Views Into Income</h2>
-        <p>Connecting businesses with trusted, local WhatsApp Status audiences across Nigeria.</p>
+        <p>Connecting businesses with trusted, verified WhatsApp Status audiences worldwide.</p>
 
         <div className="auth-side-features">
           <div className="auth-side-feature">
             <div className="auth-check">✓</div>
-            <span>Verified Nigerian WhatsApp micro-influencers</span>
+            <span>Verified global WhatsApp creator network</span>
           </div>
           <div className="auth-side-feature">
             <div className="auth-check">✓</div>
-            <span>Hyper-local location and audience targeting</span>
+            <span>Country and dynamic administrative location targeting</span>
           </div>
           <div className="auth-side-feature">
             <div className="auth-check">✓</div>
-            <span>Guaranteed payouts upon proof approval</span>
+            <span>Video-verified gig completion &amp; guaranteed payouts</span>
           </div>
         </div>
       </div>
@@ -79,6 +106,24 @@ export default function LoginPage() {
             </Link>
             <h1>Welcome Back</h1>
             <p>Log in to access your advertising or earnings dashboard</p>
+          </div>
+
+          {/* Google Sign In */}
+          <div style={{ marginBottom: '20px' }}>
+            <GoogleAuthButton
+              text="signin_with"
+              onCredentialSuccess={handleGoogleSuccess}
+              onError={(msg) => toast.info(msg)}
+            />
+          </div>
+
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', color: '#94a3b8' }}>
+            <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+            <span style={{ padding: '0 12px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              or sign in with password
+            </span>
+            <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
           </div>
 
           <form onSubmit={handleLogin}>

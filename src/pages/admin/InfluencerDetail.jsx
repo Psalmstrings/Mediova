@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { adminGetInfluencer, adminVerifyInfluencer } from '../../services/api';
+import { resolveMediaUrl, downloadMedia } from '../../utils/media';
 import { toast } from '../../components/ui/Toast';
 
 export default function AdminInfluencerDetail() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [latestVerification, setLatestVerification] = useState(null);
   const [recentGigs, setRecentGigs] = useState([]);
 
   // Verification Edit State
@@ -25,6 +27,7 @@ export default function AdminInfluencerDetail() {
       setLoading(true);
       const { data } = await adminGetInfluencer(id);
       setProfile(data.profile);
+      setLatestVerification(data.latestVerification || null);
       setRecentGigs(data.recentGigs || []);
       setVerifiedViews(data.profile.verifiedViews || data.profile.averageViews || 1000);
       setVerificationStatus(data.profile.verificationStatus || 'pending');
@@ -92,7 +95,7 @@ export default function AdminInfluencerDetail() {
               <div>
                 <h2 style={{ fontSize: '1.4rem' }}>{profile.userId?.name}</h2>
                 <div style={{ fontSize: '13px', color: '#64748b' }}>
-                  {profile.userId?.email} •  {profile.userId?.phone} •  WA: {profile.whatsappNumber}
+                  {profile.userId?.email} • 📱 WhatsApp: <strong>{profile.userId?.whatsappNumber || profile.whatsappNumber || profile.userId?.phone}</strong>
                 </div>
               </div>
               <span className={`badge ${profile.verificationStatus === 'verified' ? 'badge-success' : 'badge-warning'}`}>
@@ -102,8 +105,9 @@ export default function AdminInfluencerDetail() {
 
             <div className="card-body">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
-                <div><strong>State & City:</strong> {profile.state}, {profile.city || profile.lga}</div>
-                <div><strong>Primary Area:</strong> {profile.area}</div>
+                <div><strong>Country:</strong> {profile.userId?.country || 'Not specified'}</div>
+                <div><strong>Region / State:</strong> {profile.state || profile.region || 'Not specified'}</div>
+                <div><strong>Local Area / Division:</strong> {profile.area || profile.city || profile.lga || 'Not specified'}</div>
                 <div><strong>Additional Reach Areas:</strong> {profile.additionalAreas?.join(', ') || 'None specified'}</div>
                 <div><strong>Categories:</strong> {profile.categories?.join(', ') || 'All categories'}</div>
                 <div><strong>Self-Reported Average Views:</strong> {Number(profile.averageViews).toLocaleString()}</div>
@@ -133,6 +137,67 @@ export default function AdminInfluencerDetail() {
             </div>
           </div>
 
+          {/* Verification Video Proof */}
+          <div className="card">
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <h3 style={{ fontSize: '1.2rem', margin: 0 }}>🎥 Verification Video Proof</h3>
+              {latestVerification?.status && (
+                <span className={`badge ${latestVerification.status === 'verified' || latestVerification.status === 'approved' ? 'badge-success' : 'badge-warning'}`}>
+                  Audit: {latestVerification.status}
+                </span>
+              )}
+            </div>
+            <div className="card-body">
+              {latestVerification?.videoUrl || profile?.verificationVideo ? (
+                <div>
+                  <div style={{ borderRadius: '8px', overflow: 'hidden', background: '#0f172a', marginBottom: '14px', maxHeight: '360px', display: 'flex', justifyContent: 'center' }}>
+                    <video
+                      controls
+                      src={resolveMediaUrl(latestVerification?.videoUrl || profile?.verificationVideo)}
+                      style={{ width: '100%', maxHeight: '360px', objectFit: 'contain' }}
+                      preload="metadata"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => downloadMedia(latestVerification?.videoUrl || profile?.verificationVideo, `${profile.userId?.name || 'influencer'}-verification-video`)}
+                      className="btn btn-sm btn-outline"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      ⬇ Download Video
+                    </button>
+                    <a
+                      href={resolveMediaUrl(latestVerification?.videoUrl || profile?.verificationVideo)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-sm btn-ghost"
+                      style={{ color: '#2563eb' }}
+                    >
+                      Open in New Tab ↗
+                    </a>
+                    {latestVerification?.createdAt && (
+                      <span style={{ fontSize: '12px', color: '#64748b', marginLeft: 'auto' }}>
+                        Submitted: {new Date(latestVerification.createdAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                  {latestVerification?.notes && (
+                    <div style={{ marginTop: '12px', padding: '10px 12px', background: '#f8fafc', borderRadius: '6px', fontSize: '13px', color: '#475569', border: '1px solid #e2e8f0' }}>
+                      <strong>Influencer Note:</strong> {latestVerification.notes}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ color: '#94a3b8', fontStyle: 'italic', padding: '12px 0' }}>
+                  No verification screen-recording video submitted yet.
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Proof Screenshots */}
           <div className="card">
             <div className="card-header">
@@ -142,8 +207,8 @@ export default function AdminInfluencerDetail() {
               {profile.proofImages && profile.proofImages.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
                   {profile.proofImages.map((img, i) => (
-                    <a key={i} href={img.url} target="_blank" rel="noreferrer">
-                      <img src={img.url} alt={`Proof ${i}`} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                    <a key={i} href={resolveMediaUrl(img.url || img)} target="_blank" rel="noreferrer">
+                      <img src={resolveMediaUrl(img.url || img)} alt={`Proof ${i}`} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
                     </a>
                   ))}
                 </div>

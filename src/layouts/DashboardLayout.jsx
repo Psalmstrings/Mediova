@@ -18,7 +18,7 @@ const influencerNav = [
 // ===== VENDOR SIDEBAR NAV =====
 const vendorNav = [
   { label: 'Dashboard', to: '/vendor/dashboard' },
-  { label: 'Place Advertisement', to: '/vendor/advertise', highlight: true },
+  { label: 'Place Advert', to: '/vendor/advertise', highlight: true },
   { label: 'My Orders', to: '/vendor/orders' },
   { label: 'Disputes & Appeals', to: '/vendor/complaints' },
   { label: 'Notifications', to: '/vendor/notifications', notif: true },
