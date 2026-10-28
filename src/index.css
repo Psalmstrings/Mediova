@@ -561,6 +561,10 @@ textarea.form-control {
   display: flex;
   min-height: 100vh;
   background: var(--bg);
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .sidebar {
@@ -786,10 +790,13 @@ textarea.form-control {
 /* ===== MAIN CONTENT ===== */
 .main-content {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
   margin-left: var(--sidebar-width);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .topbar {
@@ -858,6 +865,8 @@ textarea.form-control {
   padding: var(--space-xl);
   max-width: 1400px;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .page-header {
@@ -942,26 +951,33 @@ textarea.form-control {
 /* ===== EMPTY STATE ===== */
 .empty-state {
   text-align: center;
-  padding: var(--space-3xl) var(--space-xl);
+  padding: var(--space-2xl) var(--space-md);
   background: var(--surface2);
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  margin: var(--space-lg) 0;
+  margin: var(--space-md) 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .empty-state h3, .empty-title {
-  font-size: 1.15rem;
+  font-size: clamp(1rem, 3.5vw, 1.15rem);
   font-weight: 700;
   margin-bottom: var(--space-xs);
   color: var(--text-primary);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .empty-state p, .empty-desc {
   color: var(--text-muted);
-  font-size: 14px;
-  max-width: 420px;
+  font-size: 13.5px;
+  max-width: 100%;
   margin: 0 auto var(--space-md);
   line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* ===== MODAL ===== */
@@ -1790,6 +1806,13 @@ textarea.form-control {
 .status-completed { color: #0284c7; }
 
 /* ===== RESPONSIVE ===== */
+.mobile-only {
+  display: none !important;
+}
+.desktop-only {
+  display: block;
+}
+
 @media (max-width: 1024px) {
   .grid-3 { grid-template-columns: 1fr 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
@@ -1835,6 +1858,8 @@ textarea.form-control {
 
   .hamburger { display: flex !important; }
   .mobile-nav-toggle { display: inline-flex !important; }
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
 
   .topbar {
     padding: 0 12px;

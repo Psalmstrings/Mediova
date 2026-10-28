@@ -87,11 +87,10 @@ const NavItems = ({ items, unreadCount, onNavClick }) => (
 );
 
 export default function DashboardLayout({ children, title, role }) {
-  const { user, logout, unreadCount, switchActiveRole } = useAuth();
+  const { user, logout, unreadCount } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [switchingRole, setSwitchingRole] = useState(false);
 
   const activeRole = role || user?.role || 'vendor';
   const navMap = { influencer: influencerNav, vendor: vendorNav, admin: adminNav };
@@ -133,29 +132,7 @@ export default function DashboardLayout({ children, title, role }) {
     navigate('/login');
   };
 
-  const handleRoleSwitch = async (targetRole) => {
-    if (switchingRole || targetRole === activeRole) return;
-    setSwitchingRole(true);
-    try {
-      const res = await switchActiveRole(targetRole);
-      if (res.success) {
-        toast.success(`Switched to ${targetRole === 'vendor' ? 'Advertiser' : 'Influencer'} dashboard`);
-        navigate(targetRole === 'vendor' ? '/vendor/dashboard' : '/influencer/dashboard');
-      } else {
-        toast.error(res.message || 'Failed to switch portal.');
-      }
-    } catch {
-      toast.error('Failed to switch portal.');
-    } finally {
-      setSwitchingRole(false);
-      setSidebarOpen(false);
-    }
-  };
-
   const roleLabel = { admin: 'Administrator', influencer: 'WhatsApp Influencer', vendor: 'Advertiser' };
-  const userRoles = Array.isArray(user?.roles) && user.roles.length > 0 ? user.roles : [user?.role];
-  const canSwitchToVendor = userRoles.includes('vendor') && activeRole !== 'vendor';
-  const canSwitchToInfluencer = userRoles.includes('influencer') && activeRole !== 'influencer';
 
   return (
     <div className="dashboard-layout">
@@ -184,37 +161,6 @@ export default function DashboardLayout({ children, title, role }) {
             ✕
           </button>
         </div>
-
-        {/* Portal Switcher if enrolled in multiple roles */}
-        {(canSwitchToVendor || canSwitchToInfluencer) && (
-          <div style={{ padding: '10px 16px', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '700', display: 'block', marginBottom: '6px' }}>
-              Enrolled Portals:
-            </span>
-            {canSwitchToVendor && (
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch('vendor')}
-                className="btn btn-sm btn-ghost btn-block"
-                style={{ fontSize: '12px', justifyContent: 'flex-start', color: '#10b981', padding: '6px 8px' }}
-                disabled={switchingRole}
-              >
-                🔄 Switch to Advertiser Portal
-              </button>
-            )}
-            {canSwitchToInfluencer && (
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch('influencer')}
-                className="btn btn-sm btn-ghost btn-block"
-                style={{ fontSize: '12px', justifyContent: 'flex-start', color: '#10b981', padding: '6px 8px' }}
-                disabled={switchingRole}
-              >
-                🔄 Switch to Influencer Portal
-              </button>
-            )}
-          </div>
-        )}
 
         <nav className="sidebar-nav">
           <NavItems items={navItems} unreadCount={unreadCount} onNavClick={() => setSidebarOpen(false)} />

@@ -184,7 +184,7 @@ export default function UserComplaints({ role = 'vendor' }) {
             padding: '16px',
           }}
         >
-          <div className="card" style={{ maxWidth: '560px', width: '100%', padding: '28px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="card" style={{ maxWidth: '560px', width: '100%', padding: 'clamp(16px, 4vw, 28px)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ marginBottom: '8px' }}>Lodge a Complaint or Appeal</h3>
             <p style={{ color: '#64748b', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
               Your grievance will be acknowledged with a tracking ID and investigated objectively within 3-5 business days.
@@ -258,7 +258,7 @@ export default function UserComplaints({ role = 'vendor' }) {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className="btn btn-ghost"
@@ -270,7 +270,7 @@ export default function UserComplaints({ role = 'vendor' }) {
                   type="submit"
                   className="btn btn-primary"
                   disabled={submitting}
-                  style={{ flex: 1 }}
+                  style={{ flex: '1 1 180px' }}
                 >
                   {submitting ? 'Submitting Grievance...' : 'Submit Formal Complaint →'}
                 </button>

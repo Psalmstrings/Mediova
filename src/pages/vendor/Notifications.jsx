@@ -80,19 +80,19 @@ export default function VendorNotifications() {
                   key={n._id}
                   onClick={() => !n.read && handleMarkOne(n._id)}
                   style={{
-                    padding: '16px 20px',
+                    padding: 'clamp(12px, 3vw, 16px) clamp(12px, 3vw, 20px)',
                     borderBottom: '1px solid #f1f5f9',
                     background: n.read ? 'white' : '#eff6ff',
                     display: 'flex',
                     alignItems: 'flex-start',
-                    gap: '16px',
+                    gap: '12px',
                     cursor: 'pointer',
                   }}
                 >
                   <div style={{ fontSize: '24px', flexShrink: 0 }}>
-                    {n.type === 'payment' ? '' : n.type === 'campaign' ? '' : ''}
+                    {n.type === 'payment' ? '💳' : n.type === 'campaign' ? '📢' : '🔔'}
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <strong style={{ fontSize: '14px', color: n.read ? '#334155' : '#1e40af' }}>
                         {n.title}

@@ -98,7 +98,7 @@ export default function VendorProfile() {
       </div>
 
       <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div className="card-body" style={{ padding: '32px' }}>
+        <div className="card-body" style={{ padding: 'clamp(16px, 4vw, 32px)' }}>
           <form onSubmit={handleSubmit}>
             <h4 style={{ marginBottom: '16px' }}>Business Information</h4>
 

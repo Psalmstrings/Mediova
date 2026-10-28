@@ -75,7 +75,7 @@ export default function InfluencerGigs() {
       </div>
 
       {/* Status Filter Tabs */}
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '24px', width: '100%', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
         {[
           { key: 'all', label: 'All Gigs' },
           { key: 'assigned', label: ' New Gigs' },
@@ -88,7 +88,7 @@ export default function InfluencerGigs() {
             key={tab.key}
             onClick={() => setSearchParams(tab.key === 'all' ? {} : { status: tab.key })}
             className={`btn btn-sm ${currentFilter === tab.key ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ borderRadius: '20px' }}
+            style={{ borderRadius: '20px', whiteSpace: 'nowrap', flexShrink: 0 }}
           >
             {tab.label}
           </button>
@@ -96,14 +96,13 @@ export default function InfluencerGigs() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px' }}>
+        <div style={{ textAlign: 'center', padding: '60px 16px' }}>
           <div className="spinner" style={{ margin: '0 auto 16px' }} />
           <p style={{ color: '#64748b' }}>Loading gigs...</p>
         </div>
       ) : gigs.length === 0 ? (
-        <div className="card">
-          <div className="empty-state">
-            
+        <div className="card" style={{ padding: 'clamp(14px, 3.5vw, 24px)', width: '100%', boxSizing: 'border-box' }}>
+          <div className="empty-state" style={{ margin: 0, padding: 'clamp(24px, 5vw, 44px) 16px' }}>
             <h3>No gigs found for this filter</h3>
             <p>You will see advertising campaigns here when the Admin matches them to your WhatsApp audience.</p>
           </div>
