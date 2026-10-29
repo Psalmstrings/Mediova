@@ -78,6 +78,14 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [token, fetchNotifications]);
 
+  const markTermsAccepted = useCallback((updatedUserData) => {
+    setUser((prev) => {
+      const nextUser = { ...prev, ...updatedUserData, termsAccepted: true, requiresTermsAcceptance: false };
+      localStorage.setItem('mediova_user', JSON.stringify(nextUser));
+      return nextUser;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -88,6 +96,7 @@ export const AuthProvider = ({ children }) => {
         unreadCount,
         saveSession,
         logout,
+        markTermsAccepted,
         fetchNotifications,
         setNotifications,
         setUnreadCount,

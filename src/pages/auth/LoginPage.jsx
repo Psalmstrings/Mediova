@@ -23,12 +23,16 @@ export default function LoginPage() {
         saveSession(res.data.user, res.data.token);
         toast.success(`Welcome back, ${res.data.user.name}!`);
 
-        const from = location.state?.from?.pathname;
-        if (from) {
-          navigate(from, { replace: true });
+        if (res.data.user.requiresTermsAcceptance || res.data.user.termsAccepted === false) {
+          navigate('/accept-terms', { replace: true });
         } else {
-          const dashMap = { admin: '/admin', influencer: '/influencer', vendor: '/vendor' };
-          navigate(dashMap[res.data.user.role] || '/', { replace: true });
+          const from = location.state?.from?.pathname;
+          if (from) {
+            navigate(from, { replace: true });
+          } else {
+            const dashMap = { admin: '/admin', influencer: '/influencer', vendor: '/vendor' };
+            navigate(dashMap[res.data.user.role] || '/', { replace: true });
+          }
         }
       } else if (res.data.requiresOnboarding) {
         toast.info('Please complete your registration onboarding to continue.');
@@ -51,12 +55,16 @@ export default function LoginPage() {
         saveSession(data.user, data.token);
         toast.success(`Welcome back, ${data.user.name}!`);
 
-        const from = location.state?.from?.pathname;
-        if (from) {
-          navigate(from, { replace: true });
+        if (data.user.requiresTermsAcceptance || data.user.termsAccepted === false) {
+          navigate('/accept-terms', { replace: true });
         } else {
-          const dashMap = { admin: '/admin', influencer: '/influencer', vendor: '/vendor' };
-          navigate(dashMap[data.user.role] || '/', { replace: true });
+          const from = location.state?.from?.pathname;
+          if (from) {
+            navigate(from, { replace: true });
+          } else {
+            const dashMap = { admin: '/admin', influencer: '/influencer', vendor: '/vendor' };
+            navigate(dashMap[data.user.role] || '/', { replace: true });
+          }
         }
       }
     } catch (err) {

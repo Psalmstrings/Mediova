@@ -19,7 +19,7 @@ export default function ComplaintsPolicyPage() {
             Fair, Structured, and Auditable Dispute Resolution for Advertisers and Creators
           </p>
           <div className="policy-banner-meta">
-            Effective Date: 21 October 2026 &bull; Version 2.0 &bull; Operational Resolution Framework
+            Effective Date: 21 October 2026 &bull; Operational Resolution Framework
           </div>
         </div>
       </div>

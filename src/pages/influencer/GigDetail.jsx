@@ -24,6 +24,7 @@ export default function InfluencerGigDetail() {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showDecline, setShowDecline] = useState(false);
   const [declineReason, setDeclineReason] = useState('');
+  const [scheduleBAccepted, setScheduleBAccepted] = useState(false);
 
   useEffect(() => {
     fetchGig();
@@ -47,6 +48,10 @@ export default function InfluencerGigDetail() {
   };
 
   const handleAccept = async () => {
+    if (!scheduleBAccepted) {
+      toast.warning('Please confirm the Schedule B Influencer Declaration before accepting this gig.');
+      return;
+    }
     try {
       const { data } = await acceptGig(id);
       toast.success(data.message || 'Gig accepted!');
@@ -322,23 +327,51 @@ export default function InfluencerGigDetail() {
 
           {/* Action Buttons for Assigned status */}
           {gig.status === 'assigned' && (
-            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px', display: 'flex', gap: '16px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => setShowDecline(!showDecline)}
-                style={{ color: '#dc2626' }}
-              >
-                Decline Gig
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleAccept}
-                style={{ padding: '12px 28px', fontWeight: '600' }}
-              >
-                Accept Gig (Earn ₦{Number(gig.reward).toLocaleString()})
-              </button>
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px', marginTop: '16px' }}>
+              <div style={{
+                marginBottom: '16px',
+                padding: '16px',
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px'
+              }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={scheduleBAccepted}
+                    onChange={(e) => setScheduleBAccepted(e.target.checked)}
+                    style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: '13px', color: '#1e293b', lineHeight: '1.5' }}>
+                    <strong>Schedule B — Influencer / Promoter Declaration:</strong> I confirm that I have reviewed the campaign brief and creative guidelines. I agree to publish only approved, unaltered campaign materials for the required duration (minimum 24 hours), submit authentic and unaltered video proof of views, and abide by the <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>MEDIOVA Terms and Conditions of Service</a>.
+                  </span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setShowDecline(!showDecline)}
+                  style={{ color: '#dc2626' }}
+                >
+                  Decline Gig
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleAccept}
+                  disabled={!scheduleBAccepted}
+                  style={{
+                    padding: '12px 28px',
+                    fontWeight: '600',
+                    opacity: scheduleBAccepted ? 1 : 0.6,
+                    cursor: scheduleBAccepted ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  Accept Gig (Earn ₦{Number(gig.reward).toLocaleString()})
+                </button>
+              </div>
             </div>
           )}
 

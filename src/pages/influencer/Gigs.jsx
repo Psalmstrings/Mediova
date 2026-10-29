@@ -11,6 +11,7 @@ export default function InfluencerGigs() {
   const [gigs, setGigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [declineModal, setDeclineModal] = useState({ open: false, gigId: null, reason: '' });
+  const [acceptModal, setAcceptModal] = useState({ open: false, gig: null, agreed: false });
 
   useEffect(() => {
     fetchGigs();
@@ -29,10 +30,21 @@ export default function InfluencerGigs() {
     }
   };
 
-  const handleAccept = async (id) => {
+  const handleOpenAccept = (gig) => {
+    setAcceptModal({ open: true, gig, agreed: false });
+  };
+
+  const handleAcceptSubmit = async (e) => {
+    e.preventDefault();
+    if (!acceptModal.agreed || !acceptModal.gig) {
+      toast.warning('Please confirm the Schedule B Influencer Declaration to proceed.');
+      return;
+    }
+
     try {
-      const { data } = await acceptGig(id);
+      const { data } = await acceptGig(acceptModal.gig._id);
       toast.success(data.message || 'Gig accepted! View details to get media & posting instructions.');
+      setAcceptModal({ open: false, gig: null, agreed: false });
       fetchGigs();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not accept gig.');
@@ -161,7 +173,7 @@ export default function InfluencerGigs() {
                       </button>
                       <button
                         className="btn btn-sm btn-primary"
-                        onClick={() => handleAccept(gig._id)}
+                        onClick={() => handleOpenAccept(gig)}
                       >
                         Accept Gig
                       </button>
@@ -226,6 +238,98 @@ export default function InfluencerGigs() {
                 </button>
                 <button type="submit" className="btn btn-danger">
                   Confirm Decline
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Accept Gig Schedule B Declaration Modal */}
+      {acceptModal.open && acceptModal.gig && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '540px' }}>
+            <div className="modal-header">
+              <div>
+                <h3 style={{ margin: 0 }}>Accept Gig #{acceptModal.gig.gigNumber}</h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  {acceptModal.gig.campaignId?.title || 'Advertising Campaign'}
+                </span>
+              </div>
+              <button
+                className="btn-icon"
+                onClick={() => setAcceptModal({ open: false, gig: null, agreed: false })}
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleAcceptSubmit}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>Required Views Target</div>
+                    <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '15px' }}>
+                      {Number(acceptModal.gig.assignedViews).toLocaleString()} views
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>Guaranteed Reward</div>
+                    <div style={{ fontWeight: '800', color: '#059669', fontSize: '1.25rem' }}>
+                      ₦{Number(acceptModal.gig.reward).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  padding: '14px',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={acceptModal.agreed}
+                      onChange={(e) => setAcceptModal({ ...acceptModal, agreed: e.target.checked })}
+                      style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0 }}
+                    />
+                    <span style={{ fontSize: '13px', color: '#1e293b', lineHeight: '1.5' }}>
+                      <strong>Schedule B — Influencer / Promoter Declaration:</strong> I confirm that I have reviewed the campaign brief. I agree to publish only approved, unaltered campaign materials for the required duration (minimum 24 hours), submit authentic and unaltered video proof of views, and abide by the <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>MEDIOVA Terms and Conditions of Service</a>.
+                    </span>
+                  </label>
+                </div>
+
+                <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'center' }}>
+                  Want to review full creative files and captions first?{' '}
+                  <Link
+                    to={`/influencer/gigs/${acceptModal.gig._id}`}
+                    style={{ color: '#059669', fontWeight: '600' }}
+                    onClick={() => setAcceptModal({ open: false, gig: null, agreed: false })}
+                  >
+                    Open Gig Details Page &rarr;
+                  </Link>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setAcceptModal({ open: false, gig: null, agreed: false })}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={!acceptModal.agreed}
+                  style={{
+                    opacity: acceptModal.agreed ? 1 : 0.6,
+                    cursor: acceptModal.agreed ? 'pointer' : 'not-allowed',
+                    fontWeight: '600',
+                  }}
+                >
+                  Confirm & Accept Gig
                 </button>
               </div>
             </form>

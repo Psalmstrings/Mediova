@@ -19,7 +19,7 @@ export default function RefundPolicyPage() {
             Transparent rules and auditable banking workflows governing advertising cancellations and reversals
           </p>
           <div className="policy-banner-meta">
-            Effective Date: 21 October 2026 &bull; Version 2.0 &bull; Pre-Commitment Financial Disclosure
+            Effective Date: 21 October 2026 &bull; Pre-Commitment Financial Disclosure
           </div>
         </div>
       </div>

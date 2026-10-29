@@ -29,6 +29,7 @@ export default function VendorPlaceAd() {
 
   // Success / Confirmation State
   const [orderSuccess, setOrderSuccess] = useState(null);
+  const [vendorDeclaration, setVendorDeclaration] = useState(false);
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -278,6 +279,11 @@ export default function VendorPlaceAd() {
   const handleSubmitCampaign = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    if (!vendorDeclaration) {
+      toast.warning('Please acknowledge the Schedule A Vendor Declaration to submit your campaign.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -1043,6 +1049,25 @@ export default function VendorPlaceAd() {
                 )}
               </div>
 
+              {/* Schedule A Vendor Declaration */}
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px 20px', marginBottom: '24px' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={vendorDeclaration}
+                    onChange={(e) => setVendorDeclaration(e.target.checked)}
+                    required
+                    style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#059669', flexShrink: 0, cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '13px', color: '#166534', lineHeight: '1.6' }}>
+                    <strong>Schedule A — Vendor Declaration:</strong> I confirm that I am legally authorized to advertise this content, all product and business claims are lawful and substantiated, I accept responsibility for regulatory approvals, understand disclosed campaign fees and refund policies, acknowledge that commercial sales conversions are not guaranteed, and agree to the{' '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#047857', fontWeight: '700', textDecoration: 'underline' }}>
+                      MEDIOVA Terms and Conditions
+                    </a>.
+                  </span>
+                </label>
+              </div>
+
               {/* Actions */}
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
@@ -1057,8 +1082,15 @@ export default function VendorPlaceAd() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={submitting}
-                  style={{ flex: 2, padding: '14px', fontWeight: '600', borderRadius: '8px' }}
+                  disabled={submitting || !vendorDeclaration}
+                  style={{
+                    flex: 2,
+                    padding: '14px',
+                    fontWeight: '600',
+                    borderRadius: '8px',
+                    background: vendorDeclaration ? '#059669' : '#94a3b8',
+                    cursor: vendorDeclaration ? 'pointer' : 'not-allowed',
+                  }}
                 >
                   {submitting ? 'Submitting Campaign & Receipt...' : 'Submit Complete Campaign Order'}
                 </button>

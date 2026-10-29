@@ -74,6 +74,20 @@ export default function RegisterPage() {
     }));
   };
 
+  const handleAcceptTerms = () => {
+    setFormData((prev) => ({ ...prev, termsAccepted: true }));
+    toast.success('Terms and Conditions accepted. You may now complete registration.');
+  };
+
+  const handleTermsCheckboxClick = (e) => {
+    if (!formData.termsAccepted) {
+      e.preventDefault();
+      setTermsModalOpen(true);
+    } else {
+      setFormData((prev) => ({ ...prev, termsAccepted: false }));
+    }
+  };
+
   // Google OAuth Success Handler
   const handleGoogleSuccess = async (credential) => {
     setLoading(true);
@@ -124,7 +138,8 @@ export default function RegisterPage() {
   const handleCompleteGoogleOnboarding = async (e) => {
     e.preventDefault();
     if (!formData.termsAccepted) {
-      toast.warning('You must accept the Terms and Conditions to complete registration.');
+      toast.warning('Please review and accept the Terms and Conditions to proceed.');
+      setTermsModalOpen(true);
       return;
     }
 
@@ -175,7 +190,8 @@ export default function RegisterPage() {
     }
 
     if (!formData.termsAccepted) {
-      toast.warning('You must read and agree to the Terms and Conditions to register.');
+      toast.warning('Please review and accept the Terms and Conditions to proceed.');
+      setTermsModalOpen(true);
       return;
     }
 
@@ -277,7 +293,7 @@ export default function RegisterPage() {
                   transition: 'all 0.2s',
                 }}
               >
-                📱 WhatsApp Influencer
+                 WhatsApp Influencer
                 <div style={{ fontSize: '11px', fontWeight: '400', color: '#64748b', marginTop: '2px' }}>
                   Earn from status views
                 </div>
@@ -299,7 +315,7 @@ export default function RegisterPage() {
                   transition: 'all 0.2s',
                 }}
               >
-                💼 Business / Vendor
+                 Business / Vendor
                 <div style={{ fontSize: '11px', fontWeight: '400', color: '#64748b', marginTop: '2px' }}>
                   Advertise to real audiences
                 </div>
@@ -483,28 +499,105 @@ export default function RegisterPage() {
           )}
 
           {/* Mandatory Terms and Conditions Acceptance */}
-          <div style={{ marginBottom: '24px', padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '13px', color: '#1e293b', margin: 0 }}>
+          <div
+            style={{
+              marginBottom: '20px',
+              padding: '16px',
+              borderRadius: '10px',
+              border: formData.termsAccepted ? '1.5px solid #10b981' : '1.5px solid #cbd5e1',
+              background: formData.termsAccepted ? '#f0fdf4' : '#f8fafc',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
               <input
                 type="checkbox"
+                id="termsCheckbox"
                 name="termsAccepted"
                 checked={formData.termsAccepted}
-                onChange={handleChange}
-                required
-                style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#059669', flexShrink: 0, cursor: 'pointer' }}
+                onChange={handleTermsCheckboxClick}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  marginTop: '2px',
+                  accentColor: '#059669',
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                }}
               />
-              <span>
-                I have read and agree to the{' '}
-                <button
-                  type="button"
-                  onClick={() => setTermsModalOpen(true)}
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#059669', fontWeight: '600', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px' }}
-                >
-                  Terms and Conditions
-                </button>
-                {' '}and acknowledge the global platform policies.
-              </span>
-            </label>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
+                  <label
+                    htmlFor="termsCheckbox"
+                    style={{
+                      fontWeight: '700',
+                      fontSize: '14px',
+                      color: formData.termsAccepted ? '#166534' : '#0f172a',
+                      cursor: 'pointer',
+                      margin: 0,
+                    }}
+                  >
+                    {formData.termsAccepted ? '✓ Terms and Conditions Accepted' : 'Terms and Conditions Agreement'}
+                  </label>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: formData.termsAccepted ? '#dcfce7' : '#e2e8f0',
+                      color: formData.termsAccepted ? '#15803d' : '#64748b',
+                    }}
+                  >
+                    {formData.termsAccepted ? 'Accepted' : 'Required'}
+                  </span>
+                </div>
+
+                <p style={{ margin: '0 0 10px', fontSize: '12.5px', color: '#475569', lineHeight: '1.5' }}>
+                  {formData.termsAccepted
+                    ? 'You have reviewed and accepted the MEDIOVA Terms and Conditions of Service.'
+                    : 'You must read and accept the MEDIOVA Terms and Conditions of Service before you can submit your registration.'}
+                </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalOpen(true)}
+                    style={{
+                      background: formData.termsAccepted ? '#e2e8f0' : '#059669',
+                      color: formData.termsAccepted ? '#1e293b' : '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'background 0.2s ease',
+                    }}
+                  >
+                    {formData.termsAccepted ? '📖 Re-read Terms' : ' Read & Accept Terms'}
+                  </button>
+
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '12px',
+                      color: '#059669',
+                      textDecoration: 'underline',
+                      fontWeight: '500',
+                    }}
+                  >
+                    Open Full Unabridged Terms ↗
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Submit Button */}
@@ -522,10 +615,12 @@ export default function RegisterPage() {
               border: 'none',
               color: '#ffffff',
               cursor: formData.termsAccepted ? 'pointer' : 'not-allowed',
+              opacity: formData.termsAccepted ? 1 : 0.7,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
+              transition: 'background 0.2s ease, opacity 0.2s ease',
             }}
           >
             {loading ? (
@@ -536,6 +631,23 @@ export default function RegisterPage() {
               `Create ${role === 'vendor' ? 'Vendor' : 'Influencer'} Account`
             )}
           </button>
+
+          {!formData.termsAccepted && (
+            <div
+              style={{
+                marginTop: '10px',
+                textAlign: 'center',
+                fontSize: '12px',
+                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              
+            </div>
+          )}
         </form>
 
         {/* Login Link */}
@@ -548,7 +660,13 @@ export default function RegisterPage() {
       </div>
 
       {/* Terms and Conditions Modal */}
-      <TermsModal isOpen={termsModalOpen} onClose={() => setTermsModalOpen(false)} />
+      <TermsModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        onAccept={handleAcceptTerms}
+        isAccepted={formData.termsAccepted}
+        role={role}
+      />
     </div>
   );
 }

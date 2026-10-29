@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { ProtectedRoute, GuestRoute } from './components/RouteGuards';
+import { ProtectedRoute, GuestRoute, AcceptTermsRoute } from './components/RouteGuards';
 import { Toaster } from './components/ui/Toast';
 
 // Public Pages
@@ -23,6 +23,7 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import AdminRegisterPage from './pages/auth/AdminRegisterPage';
+import AcceptTermsPage from './pages/auth/AcceptTermsPage';
 
 // Influencer Pages
 import InfluencerDashboard from './pages/influencer/Dashboard';
@@ -95,6 +96,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/admin-setup" element={<AdminRegisterPage />} />
+          <Route path="/accept-terms" element={<AcceptTermsRoute><AcceptTermsPage /></AcceptTermsRoute>} />
 
           {/* Influencer Routes */}
           <Route path="/influencer" element={<ProtectedRoute role="influencer"><InfluencerDashboard /></ProtectedRoute>} />

@@ -19,7 +19,7 @@ export default function PrivacyPage() {
             Structured under the Nigeria Data Protection Act 2023 (NDPA 2023) and global privacy benchmarks
           </p>
           <div className="policy-banner-meta">
-            Effective Date: 21 October 2026 &bull; Version 2.0 &bull; Mandatory Electronic Disclosure
+            Effective Date: 21 October 2026 &bull; Mandatory Electronic Disclosure
           </div>
         </div>
       </div>

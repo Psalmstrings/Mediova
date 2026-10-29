@@ -59,6 +59,7 @@ export const resendVerification = (data) => API.post('/auth/resend-verification'
 export const forgotPassword = (data) => API.post('/auth/forgot-password', data);
 export const resetPassword = (data) => API.post('/auth/reset-password', data);
 export const getMe = () => API.get('/auth/me');
+export const acceptTerms = (data) => API.post('/auth/accept-terms', data);
 export const registerAdmin = (data) => API.post('/auth/admin-register', data);
 
 // =====================
